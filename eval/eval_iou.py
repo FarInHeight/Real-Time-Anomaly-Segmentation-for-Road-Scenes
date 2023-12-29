@@ -110,12 +110,13 @@ def main(args):
 
     iou_classes_str = []
     for i in range(iou_classes.size(0)):
-        iouStr = getColorEntry(iou_classes[i])+'{:0.2f}'.format(iou_classes[i]*100) + '\033[0m'
+        # iouStr = getColorEntry(iou_classes[i])+'{:0.2f}'.format(iou_classes[i]*100) + '\033[0m'
+        iouStr = '{:0.2f}'.format(iou_classes[i]*100)
         iou_classes_str.append(iouStr)
 
     with open('iou_results.txt', 'a') as f:
         print("---------------------------------------", file=f)
-        print("Took ", time.time()-start, "seconds", file=f)
+        print("Model", modelname.upper(), "Took", time.time()-start, "seconds", file=f)
         print("=======================================", file=f)
         #print("TOTAL IOU: ", iou * 100, "%", file=f)
         print("Per-Class IoU:", file=f)
@@ -139,7 +140,8 @@ def main(args):
         print(iou_classes_str[17], "motorcycle", file=f)
         print(iou_classes_str[18], "bicycle", file=f)
         print("=======================================", file=f)
-        iouStr = getColorEntry(iouVal)+'{:0.2f}'.format(iouVal*100) + '\033[0m'
+        # iouStr = getColorEntry(iouVal)+'{:0.2f}'.format(iouVal*100) + '\033[0m'
+        iouStr = '{:0.2f}'.format(iouVal*100)
         print("MEAN IoU: ", iouStr, "%", file=f)
 
 if __name__ == '__main__':
