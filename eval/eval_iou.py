@@ -39,13 +39,22 @@ target_transform_cityscapes = Compose([
 
 def main(args):
 
+    if not os.path.exists('iou_results.txt'):
+        open('iou_results.txt', 'w').close()
+
+    modelname = args.loadModel.rstrip(".py")
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
 
-    model = ERFNet(NUM_CLASSES)
+    if modelname == "erfnet":
+        model = ERFNet(NUM_CLASSES)
+    elif modelname == "enet":
+        pass
+    elif modelname == "bisenet":
+        pass
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
@@ -104,33 +113,34 @@ def main(args):
         iouStr = getColorEntry(iou_classes[i])+'{:0.2f}'.format(iou_classes[i]*100) + '\033[0m'
         iou_classes_str.append(iouStr)
 
-    print("---------------------------------------")
-    print("Took ", time.time()-start, "seconds")
-    print("=======================================")
-    #print("TOTAL IOU: ", iou * 100, "%")
-    print("Per-Class IoU:")
-    print(iou_classes_str[0], "Road")
-    print(iou_classes_str[1], "sidewalk")
-    print(iou_classes_str[2], "building")
-    print(iou_classes_str[3], "wall")
-    print(iou_classes_str[4], "fence")
-    print(iou_classes_str[5], "pole")
-    print(iou_classes_str[6], "traffic light")
-    print(iou_classes_str[7], "traffic sign")
-    print(iou_classes_str[8], "vegetation")
-    print(iou_classes_str[9], "terrain")
-    print(iou_classes_str[10], "sky")
-    print(iou_classes_str[11], "person")
-    print(iou_classes_str[12], "rider")
-    print(iou_classes_str[13], "car")
-    print(iou_classes_str[14], "truck")
-    print(iou_classes_str[15], "bus")
-    print(iou_classes_str[16], "train")
-    print(iou_classes_str[17], "motorcycle")
-    print(iou_classes_str[18], "bicycle")
-    print("=======================================")
-    iouStr = getColorEntry(iouVal)+'{:0.2f}'.format(iouVal*100) + '\033[0m'
-    print ("MEAN IoU: ", iouStr, "%")
+    with open('iou_results.txt', 'a') as f:
+        print("---------------------------------------", file=f)
+        print("Took ", time.time()-start, "seconds", file=f)
+        print("=======================================", file=f)
+        #print("TOTAL IOU: ", iou * 100, "%", file=f)
+        print("Per-Class IoU:", file=f)
+        print(iou_classes_str[0], "Road", file=f)
+        print(iou_classes_str[1], "sidewalk", file=f)
+        print(iou_classes_str[2], "building", file=f)
+        print(iou_classes_str[3], "wall", file=f)
+        print(iou_classes_str[4], "fence", file=f)
+        print(iou_classes_str[5], "pole", file=f)
+        print(iou_classes_str[6], "traffic light", file=f)
+        print(iou_classes_str[7], "traffic sign", file=f)
+        print(iou_classes_str[8], "vegetation", file=f)
+        print(iou_classes_str[9], "terrain", file=f)
+        print(iou_classes_str[10], "sky", file=f)
+        print(iou_classes_str[11], "person", file=f)
+        print(iou_classes_str[12], "rider", file=f)
+        print(iou_classes_str[13], "car", file=f)
+        print(iou_classes_str[14], "truck", file=f)
+        print(iou_classes_str[15], "bus", file=f)
+        print(iou_classes_str[16], "train", file=f)
+        print(iou_classes_str[17], "motorcycle", file=f)
+        print(iou_classes_str[18], "bicycle", file=f)
+        print("=======================================", file=f)
+        iouStr = getColorEntry(iouVal)+'{:0.2f}'.format(iouVal*100) + '\033[0m'
+        print("MEAN IoU: ", iouStr, "%", file=f)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
