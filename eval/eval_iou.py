@@ -112,7 +112,8 @@ def main(args):
         with torch.no_grad():
             outputs = model(inputs)
 
-        outputs = torch.roll(outputs, -1, 1)
+        if modelname == 'enet':
+            outputs = torch.roll(outputs, -1, 1)
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
 
