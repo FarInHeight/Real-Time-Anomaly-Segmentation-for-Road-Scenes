@@ -1,3 +1,6 @@
+# Author: David Silva 
+# Link: https://github.com/davidtvs/PyTorch-ENet/
+
 import torch.nn as nn
 import torch
 
