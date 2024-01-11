@@ -9,6 +9,7 @@ import time
 import numpy as np
 import torch
 import math
+import torchvision.transforms.functional as TF
 
 from PIL import Image, ImageOps
 from argparse import ArgumentParser
@@ -16,7 +17,7 @@ from argparse import ArgumentParser
 from torch.optim import SGD, Adam, lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, Pad
+from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, Pad, RandomHorizontalFlip, RandomResizedCrop
 from torchvision.transforms import ToTensor, ToPILImage
 
 from dataset import VOC12, cityscapes
@@ -71,6 +72,30 @@ class MyCoTransform(object):
         target = ToLabel()(target)
         target = Relabel(255, 19)(target)
 
+        return input, target
+    
+class BiSeNetCoTransform(object):
+    def __init__(self, height=512, mode='train'):
+        self.mode = mode
+        self.height = height
+
+    def __call__(self, input, target):
+        input = Resize(self.height, Image.BILINEAR)(input)
+        target = Resize(self.height, Image.NEAREST)(target)
+        # do something to both images
+        if self.mode == 'train':
+            if random.random() > 0.5:
+                input = TF.hflip(input)
+                target = TF.hflip(target)
+            i, j, h, w = RandomResizedCrop.get_params(input, scale=(0.75, 1.0, 1.5, 1.75, 2.0), ratio=(0.5, 1, 1.5))
+            input = TF.crop(input, i, j, h, w)
+            target = TF.crop(target, i, j, h, w)
+
+        input = ToTensor()(input)
+        target = ToLabel()(target)
+        target = Relabel(255, 19)(target)
+
+        assert input.size()[1:] == target.size()[1:], f"wtf: {input.size()}, {target.size()}"
         return input, target
 
 
@@ -136,8 +161,12 @@ def train(args, model, enc=False):
 
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
-    co_transform = MyCoTransform(enc, augment=True, height=args.height)  # 1024)
-    co_transform_val = MyCoTransform(enc, augment=False, height=args.height)  # 1024)
+    if args.erfnet:
+        co_transform = MyCoTransform(enc, augment=True, height=args.height)  # 1024)
+        co_transform_val = MyCoTransform(enc, augment=False, height=args.height)  # 1024)
+    else:
+        co_transform = BiSeNetCoTransform(height=args.height, mode='train')  # 1024)
+        co_transform_val = BiSeNetCoTransform(height=args.height, mode='val')  # 1024)
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     dataset_val = cityscapes(args.datadir, co_transform_val, 'val')
 
@@ -296,79 +325,82 @@ def train(args, model, enc=False):
         # Validate on 500 val images after each epoch of training
         print("----- VALIDATING - EPOCH", epoch, "-----")
         model.eval()
-        epoch_loss_val = []
-        time_val = []
 
-        if doIouVal:
-            iouEvalVal = iouEval(NUM_CLASSES)
+        with torch.no_grad():
+            epoch_loss_val = []
+            time_val = []
 
-        for step, (images, labels) in enumerate(loader_val):
-            start_time = time.time()
-            if args.cuda:
-                images = images.cuda()
-                labels = labels.cuda()
-
-            inputs = Variable(images, volatile=True)  # volatile flag makes it free backward or outputs for eval
-            targets = Variable(labels, volatile=True)
-
-            if args.erfnet:
-                outputs = model(inputs, only_encode=enc)
-                loss = criterion(outputs, targets[:, 0])
-            else:
-                outputs, outputs16, outputs32 = model(inputs)
-                lossp = criteria_p(outputs, targets[:, 0])
-                loss2 = criteria_16(outputs16, targets[:, 0])
-                loss3 = criteria_32(outputs32, targets[:, 0])
-                loss = lossp + loss2 + loss3
-
-            epoch_loss_val.append(loss.data.item())
-            time_val.append(time.time() - start_time)
-
-            # Add batch to calculate TP, FP and FN for iou estimation
             if doIouVal:
-                # start_time_iou = time.time()
-                iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
-                # print ("Time to add confusion matrix: ", time.time() - start_time_iou)
+                iouEvalVal = iouEval(NUM_CLASSES)
 
-            if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
-                start_time_plot = time.time()
-                image = inputs[0].cpu().data
-                board.image(image, f'VAL input (epoch: {epoch}, step: {step})')
-                if isinstance(outputs, list):  # merge gpu tensors
-                    board.image(
-                        color_transform(outputs[0][0].cpu().max(0)[1].data.unsqueeze(0)),
-                        f'VAL output (epoch: {epoch}, step: {step})',
-                    )
+            for step, (images, labels) in enumerate(loader_val):
+                start_time = time.time()
+                if args.cuda:
+                    images = images.cuda()
+                    labels = labels.cuda()
+
+                inputs = Variable(images, volatile=True)  # volatile flag makes it free backward or outputs for eval
+                targets = Variable(labels, volatile=True)
+
+                if args.erfnet:
+                    outputs = model(inputs, only_encode=enc)
+                    loss = criterion(outputs, targets[:, 0])
                 else:
-                    board.image(
-                        color_transform(outputs[0].cpu().max(0)[1].data.unsqueeze(0)),
-                        f'VAL output (epoch: {epoch}, step: {step})',
+                    outputs, outputs16, outputs32 = model(inputs)
+                    lossp = criteria_p(outputs, targets[:, 0])
+                    loss2 = criteria_16(outputs16, targets[:, 0])
+                    loss3 = criteria_32(outputs32, targets[:, 0])
+                    loss = lossp + loss2 + loss3
+
+                epoch_loss_val.append(loss.data.item())
+                time_val.append(time.time() - start_time)
+
+                # Add batch to calculate TP, FP and FN for iou estimation
+                if doIouVal:
+                    # start_time_iou = time.time()
+                    iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
+                    # print ("Time to add confusion matrix: ", time.time() - start_time_iou)
+
+                if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
+                    start_time_plot = time.time()
+                    image = inputs[0].cpu().data
+                    board.image(image, f'VAL input (epoch: {epoch}, step: {step})')
+                    if isinstance(outputs, list):  # merge gpu tensors
+                        board.image(
+                            color_transform(outputs[0][0].cpu().max(0)[1].data.unsqueeze(0)),
+                            f'VAL output (epoch: {epoch}, step: {step})',
+                        )
+                    else:
+                        board.image(
+                            color_transform(outputs[0].cpu().max(0)[1].data.unsqueeze(0)),
+                            f'VAL output (epoch: {epoch}, step: {step})',
+                        )
+                    board.image(color_transform(targets[0].cpu().data), f'VAL target (epoch: {epoch}, step: {step})')
+                    print("Time to paint images: ", time.time() - start_time_plot)
+                if args.steps_loss > 0 and step % args.steps_loss == 0:
+                    average = sum(epoch_loss_val) / len(epoch_loss_val)
+                    print(
+                        f'VAL loss: {average:0.4} (epoch: {epoch}, step: {step})',
+                        "// Avg time/img: %.4f s" % (sum(time_val) / len(time_val) / args.batch_size),
                     )
-                board.image(color_transform(targets[0].cpu().data), f'VAL target (epoch: {epoch}, step: {step})')
-                print("Time to paint images: ", time.time() - start_time_plot)
-            if args.steps_loss > 0 and step % args.steps_loss == 0:
-                average = sum(epoch_loss_val) / len(epoch_loss_val)
-                print(
-                    f'VAL loss: {average:0.4} (epoch: {epoch}, step: {step})',
-                    "// Avg time/img: %.4f s" % (sum(time_val) / len(time_val) / args.batch_size),
-                )
 
-        average_epoch_loss_val = sum(epoch_loss_val) / len(epoch_loss_val)
-        # scheduler.step(average_epoch_loss_val, epoch)  ## scheduler 1   # update lr if needed
+            average_epoch_loss_val = sum(epoch_loss_val) / len(epoch_loss_val)
+            # scheduler.step(average_epoch_loss_val, epoch)  ## scheduler 1   # update lr if needed
 
-        iouVal = 0
-        if doIouVal:
-            iouVal, iou_classes = iouEvalVal.getIoU()
-            iouStr = getColorEntry(iouVal) + '{:0.2f}'.format(iouVal * 100) + '\033[0m'
-            print("EPOCH IoU on VAL set: ", iouStr, "%")
+            iouVal = 0
+            if doIouVal:
+                iouVal, iou_classes = iouEvalVal.getIoU()
+                iouStr = getColorEntry(iouVal) + '{:0.2f}'.format(iouVal * 100) + '\033[0m'
+                print("EPOCH IoU on VAL set: ", iouStr, "%")
 
-        # remember best valIoU and save checkpoint
-        if iouVal == 0:
-            current_acc = -average_epoch_loss_val
-        else:
-            current_acc = iouVal
-        is_best = current_acc > best_acc
-        best_acc = max(current_acc, best_acc)
+            # remember best valIoU and save checkpoint
+            if iouVal == 0:
+                current_acc = -average_epoch_loss_val
+            else:
+                current_acc = iouVal
+            is_best = current_acc > best_acc
+            best_acc = max(current_acc, best_acc)
+        
         if enc:
             filenameCheckpoint = savedir + '/checkpoint_enc.pth.tar'
             filenameBest = savedir + '/model_best_enc.pth.tar'
