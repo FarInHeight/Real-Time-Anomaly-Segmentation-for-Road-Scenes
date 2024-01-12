@@ -82,7 +82,7 @@ def main(args):
     if modelname == 'enet':
         model = load_my_state_dict(model.module, torch.load(weightspath)['state_dict'])
     elif modelname == 'bisenetv1':
-        model = load_my_state_dict(model.module, torch.load(weightspath))
+        model = load_my_state_dict(model, torch.load(weightspath))
     else:
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
 
@@ -117,6 +117,8 @@ def main(args):
 
         if modelname == 'enet':
             outputs = torch.roll(outputs, -1, 1)
+        elif modelname == 'bisenetv1':
+            outputs = outputs[0]
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
 
