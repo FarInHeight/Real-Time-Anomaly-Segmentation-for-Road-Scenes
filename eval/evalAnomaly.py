@@ -7,6 +7,9 @@ import random
 from PIL import Image
 import numpy as np
 from erfnet import ERFNet
+from erfnet import ERFNet
+from enet import ENet
+from bisenetv1 import BiSeNetV1
 import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr, plot_barcode
@@ -53,13 +56,19 @@ def main():
         open('results.txt', 'w').close()
     file = open('results.txt', 'a')
 
+    modelname = args.loadModel.rstrip(".py")
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
 
     print ('Loading model: ' + modelpath)
     print ('Loading weights: ' + weightspath)
 
-    model = ERFNet(NUM_CLASSES)
+    if modelname == "erfnet":
+        model = ERFNet(NUM_CLASSES)
+    elif modelname == "enet":
+        model = ENet(NUM_CLASSES)
+    elif modelname == "bisenetv1":
+        model = BiSeNetV1(NUM_CLASSES)
 
     if not args.cpu:
         model = torch.nn.DataParallel(model).cuda()
@@ -77,16 +86,26 @@ def main():
                 own_state[name].copy_(param)
         return model
 
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    if modelname == 'enet':
+        model = load_my_state_dict(model.module, torch.load(weightspath)['state_dict'])
+    elif modelname == 'bisenetv1':
+        model = load_my_state_dict(model, torch.load(weightspath))
+    else:
+        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     print ('Model and weights LOADED successfully')
     model.eval()
 
     for path in glob.glob(os.path.expanduser(args.input)):
         print(path)
-        images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float().cuda()
         images = images.permute(0, 3, 1, 2)
         with torch.no_grad():
-            result = model(images).squeeze(0)
+            if modelname == "erfnet":
+                result = model(images).squeeze(0)
+            elif modelname == "enet":
+                result = torch.roll(model(images).squeeze(0), -1, 0)
+            elif modelname == "bisenetv1":
+                result = model(images)[0].squeeze(0)
         if args.method == 'msp':
             # MSP with temperature scaling
             anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
@@ -94,6 +113,8 @@ def main():
             anomaly_result = 1.0 - torch.max(result, dim=0)[0]
         elif args.method == 'maxentropy':
             anomaly_result = torch.div(torch.sum(- F.softmax(result, dim=0) * F.log_softmax(result, dim=0), dim=0), torch.log(torch.tensor(result.size(0))))
+        elif args.method == 'void':
+            anomaly_result = F.softmax(result, dim=0)[-1]
         anomaly_result = anomaly_result.data.cpu().numpy()
         pathGT = path.replace('images', 'labels_masks')
         if 'RoadObsticle21' in pathGT:
@@ -147,6 +168,7 @@ def main():
     fpr = fpr_at_95_tpr(val_out, val_label)
 
     dataset = args.input.split("/")[-3]
+    print(f'Model: {modelname.upper()}')
     print(f'Method: {args.method}')
     print(f'Dataset: {dataset}')
     if args.method == 'msp':
@@ -154,7 +176,7 @@ def main():
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
 
-    file.write(f'Method: {args.method}     Dataset: {dataset}{f"   Temperature: {args.temperature}" if args.method == "msp" else ""}    AUPRC score: {prc_auc * 100.0}   FPR@TPR95: {fpr * 100.0}')
+    file.write(f'Model: {modelname.upper()}    Method: {args.method}     Dataset: {dataset}{f"   Temperature: {args.temperature}" if args.method == "msp" else ""}    AUPRC score: {prc_auc * 100.0}   FPR@TPR95: {fpr * 100.0}')
     file.close()
 
 
