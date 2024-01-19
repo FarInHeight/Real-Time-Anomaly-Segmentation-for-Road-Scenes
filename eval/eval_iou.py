@@ -56,15 +56,16 @@ def main(args):
     print("Loading weights: " + weightspath)
 
     if modelname == "erfnet":
-        model = ERFNet(NUM_CLASSES)
+        net = ERFNet(NUM_CLASSES)
     elif modelname == "enet":
-        model = ENet(NUM_CLASSES)
+        net = ENet(NUM_CLASSES)
     elif modelname == "bisenetv1":
-        model = BiSeNetV1(NUM_CLASSES)
+        net = BiSeNetV1(NUM_CLASSES)
+        net.aux_mode = 'eval'
 
     # model = torch.nn.DataParallel(model)
     if not args.cpu:
-        model = torch.nn.DataParallel(model).cuda()
+        model = torch.nn.DataParallel(net).cuda()
 
     def load_my_state_dict(model, state_dict):  # custom function to load model when not all dict elements
         own_state = model.state_dict()
@@ -118,6 +119,7 @@ def main(args):
         if modelname == 'enet':
             outputs = torch.roll(outputs, -1, 1)
         elif modelname == 'bisenetv1':
+            print(images.size(), net.aux_mode)
             outputs = outputs[0]
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)

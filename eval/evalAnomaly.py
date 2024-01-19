@@ -15,6 +15,7 @@ from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr, plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 import torch.nn.functional as F
+from torchvision.transforms import Resize
 
 seed = 42
 
@@ -48,6 +49,8 @@ def main():
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method', type=str, default='msp')
     parser.add_argument('--temperature', type=float, default=1)
+    parser.add_argument('--height', type=int, default=1024)
+    parser.add_argument('--width', type=int, default=2048)
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -64,14 +67,15 @@ def main():
     print ('Loading weights: ' + weightspath)
 
     if modelname == "erfnet":
-        model = ERFNet(NUM_CLASSES)
+        net = ERFNet(NUM_CLASSES)
     elif modelname == "enet":
-        model = ENet(NUM_CLASSES)
+        net = ENet(NUM_CLASSES)
     elif modelname == "bisenetv1":
-        model = BiSeNetV1(NUM_CLASSES)
+        net = BiSeNetV1(NUM_CLASSES)
+        net.aux_mode = 'eval'
 
     if not args.cpu:
-        model = torch.nn.DataParallel(model).cuda()
+        model = torch.nn.DataParallel(net).cuda()
 
     def load_my_state_dict(model, state_dict):  # custom function to load model when not all dict elements
         own_state = model.state_dict()
@@ -99,6 +103,8 @@ def main():
         print(path)
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float().cuda()
         images = images.permute(0, 3, 1, 2)
+        if modelname == 'bisenetv1':
+            images = Resize((args.height, args.width), Image.BILINEAR)(images)
         with torch.no_grad():
             if modelname == "erfnet":
                 result = model(images).squeeze(0)
@@ -125,6 +131,8 @@ def main():
             pathGT = pathGT.replace('jpg', 'png')  
 
         mask = Image.open(pathGT)
+        if modelname == 'bisenetv1':
+            mask = Resize((args.height, args.width), Image.NEAREST)(mask)
         ood_gts = np.array(mask)
 
         if 'RoadAnomaly' in pathGT:

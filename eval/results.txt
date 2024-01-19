@@ -133,3 +133,8 @@ Model: ENET    Method: void     Dataset: RoadObsticle21    AUPRC score: 0.674684
 Model: ENET    Method: void     Dataset: FS_LostFound_full    AUPRC score: 0.2824830540118719   FPR@TPR95: 95.05664546104471
 Model: ENET    Method: void     Dataset: fs_static    AUPRC score: 2.0623263521857367   FPR@TPR95: 95.33218443127981
 Model: ENET    Method: void     Dataset: RoadAnomaly    AUPRC score: 10.264357910168693   FPR@TPR95: 94.91724350216003
+Model: BISENETV1    Method: void     Dataset: RoadAnomaly21    AUPRC score: 18.283063130645957   FPR@TPR95: 92.85969331551055
+Model: BISENETV1    Method: void     Dataset: RoadObsticle21    AUPRC score: 0.6938189336431341   FPR@TPR95: 94.77266025234937
+Model: BISENETV1    Method: void     Dataset: FS_LostFound_full    AUPRC score: 0.2747928179469158   FPR@TPR95: 94.5963193852969
+Model: BISENETV1    Method: void     Dataset: fs_static    AUPRC score: 1.8193722156182641   FPR@TPR95: 91.77815914466173
+Model: BISENETV1    Method: void     Dataset: RoadAnomaly    AUPRC score: 12.108865688208487   FPR@TPR95: 91.58337392978616
