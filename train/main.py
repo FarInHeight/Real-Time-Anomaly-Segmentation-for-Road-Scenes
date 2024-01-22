@@ -17,7 +17,16 @@ from argparse import ArgumentParser
 from torch.optim import SGD, Adam, lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, Pad, RandomHorizontalFlip, RandomResizedCrop
+from torchvision.transforms import (
+    Compose,
+    CenterCrop,
+    Normalize,
+    Resize,
+    Pad,
+    RandomHorizontalFlip,
+    RandomResizedCrop,
+    RandomCrop,
+)
 from torchvision.transforms import ToTensor, ToPILImage
 
 from dataset import VOC12, cityscapes
@@ -73,21 +82,29 @@ class MyCoTransform(object):
         target = Relabel(255, 19)(target)
 
         return input, target
-    
+
+
 class BiSeNetCoTransform(object):
-    def __init__(self, height=512, mode='train'):
+    def __init__(self, height=512, width=1024, mode='train'):
         self.mode = mode
         self.height = height
+        self.width = width
+        self.scales = (1.0, 1.5, 1.75, 2.0)
 
     def __call__(self, input, target):
         input = Resize(self.height, Image.BILINEAR)(input)
         target = Resize(self.height, Image.NEAREST)(target)
+
         # do something to both images
         if self.mode == 'train':
             if random.random() > 0.5:
                 input = TF.hflip(input)
                 target = TF.hflip(target)
-            i, j, h, w = RandomResizedCrop.get_params(input, scale=(0.75, 1.0, 1.5, 1.75, 2.0), ratio=(0.5, 1, 1.5))
+            scale = random.choice(self.scales)
+            size = int(scale * self.height)
+            input = Resize(size, Image.BILINEAR)(input)
+            target = Resize(size, Image.NEAREST)(target)
+            i, j, h, w = RandomCrop.get_params(input, output_size=(self.height, self.width))
             input = TF.crop(input, i, j, h, w)
             target = TF.crop(target, i, j, h, w)
 
@@ -165,8 +182,9 @@ def train(args, model, enc=False):
         co_transform = MyCoTransform(enc, augment=True, height=args.height)  # 1024)
         co_transform_val = MyCoTransform(enc, augment=False, height=args.height)  # 1024)
     else:
-        co_transform = BiSeNetCoTransform(height=args.height, mode='train')  # 1024)
+        co_transform = BiSeNetCoTransform(height=args.height, width=args.width, mode='train')  # 1024)
         co_transform_val = BiSeNetCoTransform(height=args.height, mode='val')  # 1024)
+        print('BiSeNet data augmentation applied')
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     dataset_val = cityscapes(args.datadir, co_transform_val, 'val')
 
@@ -203,7 +221,11 @@ def train(args, model, enc=False):
     # TODO: reduce memory in first gpu: https://discuss.pytorch.org/t/multi-gpu-training-memory-usage-in-balance/4163/4        #https://github.com/pytorch/pytorch/issues/1893
 
     # optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=2e-4)     ## scheduler 1
-    optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999), eps=1e-08, weight_decay=1e-4)  ## scheduler 2
+    if args.erfnet:
+        optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999), eps=1e-08, weight_decay=1e-4)  ## scheduler 2
+    else:
+        optimizer = SGD(model.parameters(), lr=2.5e-2, momentum=0.9, weight_decay=1e-4)
+        print('BiSeNet SDG applied')
 
     start_epoch = 1
     if args.resume:
@@ -400,7 +422,7 @@ def train(args, model, enc=False):
                 current_acc = iouVal
             is_best = current_acc > best_acc
             best_acc = max(current_acc, best_acc)
-        
+
         if enc:
             filenameCheckpoint = savedir + '/checkpoint_enc.pth.tar'
             filenameBest = savedir + '/model_best_enc.pth.tar'
@@ -565,6 +587,7 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=8097)
     parser.add_argument('--datadir', default=os.getenv("HOME") + "/cityscapes/")
     parser.add_argument('--height', type=int, default=512)
+    parser.add_argument('--width', type=int, default=1024)
     parser.add_argument('--num-epochs', type=int, default=150)
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=6)
