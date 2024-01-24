@@ -92,9 +92,11 @@ class BiSeNetCoTransform(object):
         input = Resize(self.height, Image.BILINEAR)(input)
         target = Resize(self.height, Image.NEAREST)(target)
 
-        input = input.astype(np.float32) / 255.0
+        input = np.asarray(input).astype(np.float32) / 255.0
         input = input - self.mean
         input = input / self.std
+
+        input = Image.fromarray(np.uint8(input))
 
         # do something to both images
         if self.mode == 'train':
