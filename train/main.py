@@ -18,13 +18,8 @@ from torch.optim import SGD, Adam, lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torchvision.transforms import (
-    Compose,
-    CenterCrop,
-    Normalize,
     Resize,
     Pad,
-    RandomHorizontalFlip,
-    RandomResizedCrop,
     RandomCrop,
 )
 from torchvision.transforms import ToTensor, ToPILImage
@@ -89,7 +84,7 @@ class BiSeNetCoTransform(object):
         self.mode = mode
         self.height = height
         self.width = width
-        self.scales = (1.0, 1.5, 1.75, 2.0)
+        self.scales = (0.75, 1.0, 1.5, 1.75, 2.0)
 
     def __call__(self, input, target):
         input = Resize(self.height, Image.BILINEAR)(input)
@@ -104,6 +99,10 @@ class BiSeNetCoTransform(object):
             size = int(scale * self.height)
             input = Resize(size, Image.BILINEAR)(input)
             target = Resize(size, Image.NEAREST)(target)
+            if scale == 0.75:
+                padding = 128, 256
+                input = Pad(padding, fill=0, padding_mode='constant')(input)
+                target = Pad(padding, fill=255, padding_mode='constant')(target)
             i, j, h, w = RandomCrop.get_params(input, output_size=(self.height, self.width))
             input = TF.crop(input, i, j, h, w)
             target = TF.crop(target, i, j, h, w)
