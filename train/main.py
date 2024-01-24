@@ -80,15 +80,21 @@ class MyCoTransform(object):
 
 
 class BiSeNetCoTransform(object):
-    def __init__(self, height=512, width=1024, mode='train'):
+    def __init__(self, height=512, width=1024, mean=np.array([0.485, 0.456, 0.406]), std=np.array([0.229, 0.224, 0.225]), mode='train'):
         self.mode = mode
         self.height = height
         self.width = width
         self.scales = (0.75, 1.0, 1.5, 1.75, 2.0)
+        self.mean = mean
+        self.std = std
 
     def __call__(self, input, target):
         input = Resize(self.height, Image.BILINEAR)(input)
         target = Resize(self.height, Image.NEAREST)(target)
+
+        input = input.astype(np.float32) / 255.0
+        input = input - self.mean
+        input = input / self.std
 
         # do something to both images
         if self.mode == 'train':
