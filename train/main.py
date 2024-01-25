@@ -89,8 +89,8 @@ class BiSeNetCoTransform(object):
         self.std = std
 
     def __call__(self, input, target):
-        input = Resize(self.height, Image.BILINEAR)(input)
-        target = Resize(self.height, Image.NEAREST)(target)
+        input = Resize(self.height, Image.BILINEAR, antialias=True)(input)
+        target = Resize(self.height, Image.NEAREST, antialias=True)(target)
 
         input = np.asarray(input).astype(np.float32) / 255.0
         input = input - self.mean
@@ -105,8 +105,8 @@ class BiSeNetCoTransform(object):
                 target = TF.hflip(target)
             scale = random.choice(self.scales)
             size = int(scale * self.height)
-            input = Resize(size, Image.BILINEAR)(input)
-            target = Resize(size, Image.NEAREST)(target)
+            input = Resize(size, Image.BILINEAR, antialias=True)(input)
+            target = Resize(size, Image.NEAREST, antialias=True)(target)
             if scale == 0.75:
                 padding = 128, 256
                 input = Pad(padding, fill=0, padding_mode='constant')(input)
