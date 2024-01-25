@@ -115,7 +115,6 @@ class BiSeNetCoTransform(object):
             input = TF.crop(input, i, j, h, w)
             target = TF.crop(target, i, j, h, w)
 
-        input = ToTensor()(input)
         target = ToLabel()(target)
         target = Relabel(255, 19)(target)
 
