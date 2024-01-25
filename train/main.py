@@ -96,7 +96,7 @@ class BiSeNetCoTransform(object):
         input = input - self.mean
         input = input / self.std
 
-        input = Image.fromarray(np.uint8(input))
+        input = torch.from_numpy(input.transpose(2, 0, 1)).float()
 
         # do something to both images
         if self.mode == 'train':
