@@ -617,7 +617,8 @@ if __name__ == '__main__':
     parser.add_argument('--iouVal', action='store_true', default=True)
     parser.add_argument('--resume', action='store_true')  # Use this flag to load last checkpoint for training
     parser.add_argument('--erfnet', default=False, type=bool)
-    parser.add_argument('--colab', default=False, type=bool)
+    parser.add_argument('--colab', action='store_true')
+    
     parser.add_argument('--download-step', default=10, type=int)
 
     main(parser.parse_args())
