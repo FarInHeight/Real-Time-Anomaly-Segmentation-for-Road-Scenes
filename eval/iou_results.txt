@@ -48,27 +48,27 @@ Per-Class IoU:
 =======================================
 MEAN IoU:  58.60 %
 ---------------------------------------
-Model BISENETV1 Took 83.3162009716034 seconds
+Model BISENETV1 Took 82.19710040092468 seconds
 =======================================
 Per-Class IoU:
-95.86 Road
-76.25 sidewalk
-88.66 building
-44.14 wall
-41.19 fence
-48.70 pole
-53.94 traffic light
-66.23 traffic sign
-89.91 vegetation
-57.38 terrain
-91.68 sky
-72.62 person
-48.74 rider
-91.43 car
-49.60 truck
-67.57 bus
-46.47 train
-34.89 motorcycle
-67.49 bicycle
+95.63 Road
+78.85 sidewalk
+89.17 building
+42.29 wall
+47.53 fence
+47.75 pole
+57.35 traffic light
+67.15 traffic sign
+89.90 vegetation
+59.93 terrain
+91.91 sky
+73.19 person
+50.84 rider
+92.21 car
+65.31 truck
+75.35 bus
+63.87 train
+50.87 motorcycle
+67.67 bicycle
 =======================================
-MEAN IoU:  64.88 %
+MEAN IoU:  68.78 %

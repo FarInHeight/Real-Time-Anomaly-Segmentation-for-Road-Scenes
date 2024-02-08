@@ -103,9 +103,16 @@ def main():
         print(path)
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float().cuda()
         images = images.permute(0, 3, 1, 2)
-        if modelname == 'bisenetv1':
-            images = Resize((args.height, args.width), Image.BILINEAR)(images)
+
         with torch.no_grad():
+            if modelname == 'bisenetv1':
+                images = Resize((args.height, args.width), Image.BILINEAR)(images)
+                mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
+                std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
+                images = images / 255.0
+                images = images - mean
+                images = images / std
+                
             if modelname == "erfnet":
                 result = model(images).squeeze(0)
             elif modelname == "enet":
@@ -128,7 +135,10 @@ def main():
                     torch.sum(-F.softmax(result, dim=0) * F.log_softmax(result, dim=0), dim=0),
                     torch.log(torch.tensor(result.size(0))),
                 )
-            anomaly_result = anomaly_result.data.cpu().numpy()
+            if modelname == 'bisenetv1':
+                mean = mean.data.cpu().numpy()
+                std = std.data.cpu().numpy()
+        anomaly_result = anomaly_result.data.cpu().numpy()
         pathGT = path.replace('images', 'labels_masks')
         if 'RoadObsticle21' in pathGT:
             pathGT = pathGT.replace('webp', 'png')
@@ -154,12 +164,12 @@ def main():
             ood_gts = np.where((ood_gts < 20), 0, ood_gts)
             ood_gts = np.where((ood_gts == 255), 1, ood_gts)
 
-        if 1 not in np.unique(ood_gts):
+        if 1 not in np.unique(ood_gts): 
             continue
         else:
             ood_gts_list.append(ood_gts)
             anomaly_score_list.append(anomaly_result)
-        del result, anomaly_result, ood_gts, mask, images
+        del result, anomaly_result, ood_gts, mask, images, mean, std
         torch.cuda.empty_cache()
 
     file.write('\n')

@@ -35,6 +35,13 @@ input_transform_cityscapes = Compose(
         ToTensor(),
     ]
 )
+input_transform_bisenetv1_cityscapes = Compose(
+    [
+        Resize(512, Image.BILINEAR),
+        ToTensor(),
+        Normalize(mean=torch.tensor([0.485, 0.456, 0.406]), std=torch.tensor([0.229, 0.224, 0.225])),
+    ]
+)
 target_transform_cityscapes = Compose(
     [
         Resize(512, Image.NEAREST),
@@ -62,6 +69,7 @@ def main(args):
     elif modelname == "bisenetv1":
         net = BiSeNetV1(NUM_CLASSES)
         net.aux_mode = 'eval'
+        input_transform_cityscapes = input_transform_bisenetv1_cityscapes
 
     # model = torch.nn.DataParallel(model)
     if not args.cpu:
@@ -119,7 +127,6 @@ def main(args):
         if modelname == 'enet':
             outputs = torch.roll(outputs, -1, 1)
         elif modelname == 'bisenetv1':
-            print(images.size(), net.aux_mode)
             outputs = outputs[0]
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
