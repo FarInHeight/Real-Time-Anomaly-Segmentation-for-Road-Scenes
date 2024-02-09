@@ -112,7 +112,7 @@ def main():
                 images = images / 255.0
                 images = images - mean
                 images = images / std
-                
+
             if modelname == "erfnet":
                 result = model(images).squeeze(0)
             elif modelname == "enet":
@@ -164,7 +164,7 @@ def main():
             ood_gts = np.where((ood_gts < 20), 0, ood_gts)
             ood_gts = np.where((ood_gts == 255), 1, ood_gts)
 
-        if 1 not in np.unique(ood_gts): 
+        if 1 not in np.unique(ood_gts):
             continue
         else:
             ood_gts_list.append(ood_gts)

@@ -82,7 +82,14 @@ class MyCoTransform(object):
 
 
 class BiSeNetCoTransform(object):
-    def __init__(self, height=512, width=1024, mean=np.array([0.485, 0.456, 0.406]), std=np.array([0.229, 0.224, 0.225]), mode='train'):
+    def __init__(
+        self,
+        height=512,
+        width=1024,
+        mean=np.array([0.485, 0.456, 0.406]),
+        std=np.array([0.229, 0.224, 0.225]),
+        mode='train',
+    ):
         self.mode = mode
         self.height = height
         self.width = width
@@ -120,7 +127,6 @@ class BiSeNetCoTransform(object):
         target = ToLabel()(target)
         target = Relabel(255, 19)(target)
 
-        assert input.size()[1:] == target.size()[1:], f"wtf: {input.size()}, {target.size()}"
         return input, target
 
 
@@ -618,7 +624,7 @@ if __name__ == '__main__':
     parser.add_argument('--resume', action='store_true')  # Use this flag to load last checkpoint for training
     parser.add_argument('--erfnet', default=False, type=bool)
     parser.add_argument('--colab', action='store_true')
-    
+
     parser.add_argument('--download-step', default=10, type=int)
 
     main(parser.parse_args())
