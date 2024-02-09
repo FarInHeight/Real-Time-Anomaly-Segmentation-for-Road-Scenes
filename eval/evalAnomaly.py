@@ -94,6 +94,8 @@ def main():
         model = load_my_state_dict(model.module, torch.load(weightspath)['state_dict'])
     elif modelname == 'bisenetv1':
         model = load_my_state_dict(model, torch.load(weightspath))
+        mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
+        std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
     else:
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     print('Model and weights LOADED successfully')
@@ -107,8 +109,6 @@ def main():
         with torch.no_grad():
             if modelname == 'bisenetv1':
                 images = Resize((args.height, args.width), Image.BILINEAR)(images)
-                mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
-                std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(0).unsqueeze(2).unsqueeze(3).cuda()
                 images = images / 255.0
                 images = images - mean
                 images = images / std
@@ -121,7 +121,9 @@ def main():
                 result = model(images)[0].squeeze(0)
 
         if args.method == 'void':
+            print(result.size())
             anomaly_result = F.softmax(result, dim=0)[-1]
+            print(anomaly_result.size())
         else:
             # discard 20th class output
             result = result[:-1]
@@ -135,9 +137,7 @@ def main():
                     torch.sum(-F.softmax(result, dim=0) * F.log_softmax(result, dim=0), dim=0),
                     torch.log(torch.tensor(result.size(0))),
                 )
-            if modelname == 'bisenetv1':
-                mean = mean.data.cpu().numpy()
-                std = std.data.cpu().numpy()
+
         anomaly_result = anomaly_result.data.cpu().numpy()
         pathGT = path.replace('images', 'labels_masks')
         if 'RoadObsticle21' in pathGT:
@@ -169,7 +169,7 @@ def main():
         else:
             ood_gts_list.append(ood_gts)
             anomaly_score_list.append(anomaly_result)
-        del result, anomaly_result, ood_gts, mask, images, mean, std
+        del result, anomaly_result, ood_gts, mask, images
         torch.cuda.empty_cache()
 
     file.write('\n')
