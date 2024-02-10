@@ -34,7 +34,11 @@ from iouEval import iouEval, getColorEntry
 
 from shutil import copyfile, make_archive
 
-from google.colab import files
+# from google.colab import files
+
+# EXTENSION
+from logit_norm_loss import LogitNormLoss
+from focal_loss import FocalLoss
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20  # pascal=22, cityscapes=20
@@ -208,7 +212,13 @@ def train(args, model, enc=False):
     if args.cuda:
         weight = weight.cuda()
     if args.erfnet:
-        criterion = CrossEntropyLoss2d(weight)
+        if args.loss == 'ce':
+            criterion = CrossEntropyLoss2d(weight)
+        if args.loss == 'focal':
+            criterion = FocalLoss(gamma=0)  # TODO add weight initialization?
+        if args.logit_norm:
+            # logit normalization
+            criterion = LogitNormLoss(device=None, loss_func=criterion)
         print(type(criterion))
     else:
         score_thres = 0.7
@@ -486,7 +496,7 @@ def train(args, model, enc=False):
 
         if args.colab and (epoch + 1) % args.download_step == 0:
             make_archive(savedir, 'zip', savedir)
-            files.download(f'{savedir}.zip')
+            # files.download(f'{savedir}.zip')
 
     return model  # return model (convenience for encoder-decoder training)
 
@@ -622,9 +632,13 @@ if __name__ == '__main__':
     )  # recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)
     parser.add_argument('--resume', action='store_true')  # Use this flag to load last checkpoint for training
-    parser.add_argument('--erfnet', default=False, type=bool)
+    parser.add_argument('--erfnet', default=True, type=bool)
     parser.add_argument('--colab', action='store_true')
 
     parser.add_argument('--download-step', default=10, type=int)
+
+    # EXTENSION
+    parser.add_argument('--loss', default='ce', type=str)
+    parser.add_argument('--logit_norm', default=False, type=bool)
 
     main(parser.parse_args())
