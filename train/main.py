@@ -639,6 +639,6 @@ if __name__ == '__main__':
 
     # EXTENSION
     parser.add_argument('--loss', default='ce', type=str)
-    parser.add_argument('--logit_norm', default=False, type=bool)
+    parser.add_argument('--logit_norm', action='store_true')
 
     main(parser.parse_args())
