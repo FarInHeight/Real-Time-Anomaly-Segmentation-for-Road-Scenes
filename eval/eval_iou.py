@@ -62,6 +62,7 @@ def main(args):
     print("Loading model: " + modelpath)
     print("Loading weights: " + weightspath)
 
+    global input_transform_cityscapes
     if modelname == "erfnet":
         net = ERFNet(NUM_CLASSES)
     elif modelname == "enet":
