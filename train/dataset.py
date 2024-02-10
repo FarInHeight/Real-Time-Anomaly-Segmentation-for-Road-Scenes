@@ -8,29 +8,36 @@ from torch.utils.data import Dataset
 # allowed image extensions
 EXTENSIONS = ['.jpg', '.png']
 
+
 def load_image(file):
     # read an image
     return Image.open(file)
+
 
 def is_image(filename):
     # check is the given filename is a valid image file
     return any(filename.endswith(ext) for ext in EXTENSIONS)
 
+
 def is_label(filename):
     # check if the given filename is a valid label file
     return filename.endswith("_labelTrainIds.png")
+
 
 def image_path(root, basename, extension):
     # construct an image path
     return os.path.join(root, f'{basename}{extension}')
 
+
 def image_path_city(root, name):
     # construct an image path for cityscapes files
     return os.path.join(root, f'{name}')
 
+
 def image_basename(filename):
     # get the image filename without extension
     return os.path.basename(os.path.splitext(filename)[0])
+
 
 class VOC12(Dataset):
 
@@ -40,9 +47,8 @@ class VOC12(Dataset):
         # define the root directory containing all labels
         self.labels_root = os.path.join(root, 'labels')
 
-        # take all image filenames 
-        self.filenames = [image_basename(f)
-            for f in os.listdir(self.labels_root) if is_image(f)]
+        # take all image filenames
+        self.filenames = [image_basename(f) for f in os.listdir(self.labels_root) if is_image(f)]
         # sort the image filenames
         self.filenames.sort()
 
@@ -75,8 +81,6 @@ class VOC12(Dataset):
         return len(self.filenames)
 
 
-
-
 class cityscapes(Dataset):
 
     def __init__(self, root, co_transform=None, subset='train'):
@@ -84,30 +88,39 @@ class cityscapes(Dataset):
         self.images_root = os.path.join(root, 'leftImg8bit/')
         # define the root directory containing all labels
         self.labels_root = os.path.join(root, 'gtFine/')
-        
+
         # define the root directory for training or validation images
         self.images_root += subset
         # define the root directory for training or validation labels
         self.labels_root += subset
 
         # print the computed root directory for the images
-        print (self.images_root)
-        #self.filenames = [image_basename(f) for f in os.listdir(self.images_root) if is_image(f)]
+        print(self.images_root)
+        # self.filenames = [image_basename(f) for f in os.listdir(self.images_root) if is_image(f)]
         # take all image filenames (dirpath + filename)
-        self.filenames = [os.path.join(dp, f) for dp, _, fn in os.walk(os.path.expanduser(self.images_root)) for f in fn if is_image(f)]
+        self.filenames = [
+            os.path.join(dp, f)
+            for dp, _, fn in os.walk(os.path.expanduser(self.images_root))
+            for f in fn
+            if is_image(f)
+        ]
         # sort the image filenames
         self.filenames.sort()
 
-        #[os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(".")) for f in fn]
-        #self.filenamesGt = [image_basename(f) for f in os.listdir(self.labels_root) if is_image(f)]
+        # [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(".")) for f in fn]
+        # self.filenamesGt = [image_basename(f) for f in os.listdir(self.labels_root) if is_image(f)]
         # take all label filenames (dirpath + filename)
-        self.filenamesGt = [os.path.join(dp, f) for dp, _, fn in os.walk(os.path.expanduser(self.labels_root)) for f in fn if is_label(f)]
+        self.filenamesGt = [
+            os.path.join(dp, f)
+            for dp, _, fn in os.walk(os.path.expanduser(self.labels_root))
+            for f in fn
+            if is_label(f)
+        ]
         # sort the label filenames
         self.filenamesGt.sort()
 
         # define input transformations
-        self.co_transform = co_transform # ADDED THIS
-
+        self.co_transform = co_transform  # ADDED THIS
 
     def __getitem__(self, index):
         # get a specific image filename
@@ -115,11 +128,13 @@ class cityscapes(Dataset):
         # get a specific label filename
         filenameGt = self.filenamesGt[index]
 
+        # print(filename)
+
         # read the corresponding RGB image
-        with open(image_path_city(self.images_root, filename), 'rb') as f:
+        with open(filename, 'rb') as f:
             image = load_image(f).convert('RGB')
         # read the corresponding label (palettised) image
-        with open(image_path_city(self.labels_root, filenameGt), 'rb') as f:
+        with open(filenameGt, 'rb') as f:
             label = load_image(f).convert('P')
 
         # perform a input transformation if any
@@ -130,4 +145,3 @@ class cityscapes(Dataset):
 
     def __len__(self):
         return len(self.filenames)
-
