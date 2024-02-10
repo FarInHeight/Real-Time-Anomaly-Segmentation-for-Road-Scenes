@@ -6,8 +6,6 @@ from torch.autograd import Variable
 
 class FocalLoss(nn.Module):
 
-    # TODO we need to weight init as cross entropy loss?
-
     def __init__(self, gamma=2, alpha=None, size_average=True):
         super(FocalLoss, self).__init__()
         self.gamma = gamma

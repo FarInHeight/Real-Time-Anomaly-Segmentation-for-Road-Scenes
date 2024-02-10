@@ -215,10 +215,10 @@ def train(args, model, enc=False):
         if args.loss == 'ce':
             criterion = CrossEntropyLoss2d(weight)
         if args.loss == 'focal':
-            criterion = FocalLoss(gamma=0)  # TODO add weight initialization?
+            criterion = FocalLoss()
         if args.logit_norm:
             # logit normalization
-            criterion = LogitNormLoss(device=None, loss_func=criterion)
+            criterion = LogitNormLoss(loss_func=criterion)
         print(type(criterion))
     else:
         score_thres = 0.7

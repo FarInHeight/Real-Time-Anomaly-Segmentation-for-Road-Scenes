@@ -5,9 +5,8 @@ import torch.functional as F
 
 class LogitNormLoss(nn.Module):
 
-    def __init__(self, device, loss_func, t=1.0):  # TODO manage Temperature parameter
+    def __init__(self, loss_func, t=0.04):
         super(LogitNormLoss, self).__init__()
-        self.device = device
         self.t = t
         self.loss_func = loss_func
 
