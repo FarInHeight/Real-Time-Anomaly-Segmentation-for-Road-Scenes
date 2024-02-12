@@ -139,3 +139,50 @@ Model: BISENETV1    Method: void     Dataset: RoadObsticle21    AUPRC score: 4.3
 Model: BISENETV1    Method: void     Dataset: FS_LostFound_full    AUPRC score: 8.187874867181561   FPR@TPR95: 68.49015125030971
 Model: BISENETV1    Method: void     Dataset: fs_static    AUPRC score: 7.07696895351143   FPR@TPR95: 93.51693289071265
 Model: BISENETV1    Method: void     Dataset: RoadAnomaly    AUPRC score: 15.149950430767896   FPR@TPR95: 87.46796072519484
+
+
+-------- Logit Norm - Cross Entropy loss results --------
+
+Model: ERFNET    Method: msp     Dataset: RoadAnomaly21   Temperature: 1    AUPRC score: 15.143007787925555   FPR@TPR95: 97.04267383342497
+Model: ERFNET    Method: msp     Dataset: RoadObsticle21   Temperature: 1    AUPRC score: 0.4955316581484878   FPR@TPR95: 96.02161229131156
+Model: ERFNET    Method: msp     Dataset: FS_LostFound_full   Temperature: 1    AUPRC score: 0.24330845772454054   FPR@TPR95: 91.37046302775539
+Model: ERFNET    Method: msp     Dataset: fs_static   Temperature: 1    AUPRC score: 2.7148377195540188   FPR@TPR95: 86.12734798856229
+Model: ERFNET    Method: msp     Dataset: RoadAnomaly   Temperature: 1    AUPRC score: 14.670753342393533   FPR@TPR95: 87.59267897486673
+Model: ERFNET    Method: maxlogit     Dataset: RoadAnomaly21    AUPRC score: 16.144032224149004   FPR@TPR95: 96.84403466336238
+Model: ERFNET    Method: maxlogit     Dataset: RoadObsticle21    AUPRC score: 0.5572783346677236   FPR@TPR95: 96.05494978847148
+Model: ERFNET    Method: maxlogit     Dataset: FS_LostFound_full    AUPRC score: 0.2408524259574783   FPR@TPR95: 90.57467591162673
+Model: ERFNET    Method: maxlogit     Dataset: fs_static    AUPRC score: 2.7432562071303312   FPR@TPR95: 86.30500584453213
+Model: ERFNET    Method: maxlogit     Dataset: RoadAnomaly    AUPRC score: 14.910054304755468   FPR@TPR95: 87.15598787207604
+Model: ERFNET    Method: maxentropy     Dataset: RoadAnomaly21    AUPRC score: 16.066247214668994   FPR@TPR95: 97.03465148594029
+Model: ERFNET    Method: maxentropy     Dataset: RoadObsticle21    AUPRC score: 0.5217265744841505   FPR@TPR95: 96.02852377007008
+Model: ERFNET    Method: maxentropy     Dataset: FS_LostFound_full    AUPRC score: 0.2437010800877575   FPR@TPR95: 91.34251129347032
+Model: ERFNET    Method: maxentropy     Dataset: fs_static    AUPRC score: 2.625909203282758   FPR@TPR95: 86.18615414445804
+Model: ERFNET    Method: maxentropy     Dataset: RoadAnomaly    AUPRC score: 15.080616503245695   FPR@TPR95: 87.5872371821255
+Model: ERFNET    Method: void     Dataset: RoadAnomaly21    AUPRC score: 16.907613106774352   FPR@TPR95: 97.02269587214619
+Model: ERFNET    Method: void     Dataset: RoadObsticle21    AUPRC score: 0.6358874209045072   FPR@TPR95: 95.10672730327428
+Model: ERFNET    Method: void     Dataset: FS_LostFound_full    AUPRC score: 0.25540655038864873   FPR@TPR95: 91.22750795530062
+Model: ERFNET    Method: void     Dataset: fs_static    AUPRC score: 2.539381834701783   FPR@TPR95: 87.72556736005589
+Model: ERFNET    Method: void     Dataset: RoadAnomaly    AUPRC score: 13.18039870239352   FPR@TPR95: 87.5550724221647
+
+-------- Logit Norm - Focal loss results --------
+
+Model: ERFNET    Method: msp     Dataset: RoadAnomaly21   Temperature: 1    AUPRC score: 19.63784567498845   FPR@TPR95: 96.47595108689274
+Model: ERFNET    Method: msp     Dataset: RoadObsticle21   Temperature: 1    AUPRC score: 0.4611309585944779   FPR@TPR95: 97.86872171514446
+Model: ERFNET    Method: msp     Dataset: FS_LostFound_full   Temperature: 1    AUPRC score: 0.32980861509438486   FPR@TPR95: 96.09842107950371
+Model: ERFNET    Method: msp     Dataset: fs_static   Temperature: 1    AUPRC score: 1.481594403683194   FPR@TPR95: 96.71714935940324
+Model: ERFNET    Method: msp     Dataset: RoadAnomaly   Temperature: 1    AUPRC score: 15.378794421495028   FPR@TPR95: 86.50393371483347
+Model: ERFNET    Method: maxlogit     Dataset: RoadAnomaly21    AUPRC score: 18.205038070779544   FPR@TPR95: 98.36960265398791
+Model: ERFNET    Method: maxlogit     Dataset: RoadObsticle21    AUPRC score: 0.4646633506906704   FPR@TPR95: 97.91748424723532
+Model: ERFNET    Method: maxlogit     Dataset: FS_LostFound_full    AUPRC score: 0.3110204587208584   FPR@TPR95: 96.09723210850449
+Model: ERFNET    Method: maxlogit     Dataset: fs_static    AUPRC score: 1.55151370559645   FPR@TPR95: 96.48468983596437
+Model: ERFNET    Method: maxlogit     Dataset: RoadAnomaly    AUPRC score: 14.614658533740183   FPR@TPR95: 88.23515829729944
+Model: ERFNET    Method: maxentropy     Dataset: RoadAnomaly21    AUPRC score: 19.896634654665576   FPR@TPR95: 98.22034222614585
+Model: ERFNET    Method: maxentropy     Dataset: RoadObsticle21    AUPRC score: 0.44715621813523965   FPR@TPR95: 96.90386875025189
+Model: ERFNET    Method: maxentropy     Dataset: FS_LostFound_full    AUPRC score: 0.3272016133483175   FPR@TPR95: 96.5802160827663
+Model: ERFNET    Method: maxentropy     Dataset: fs_static    AUPRC score: 1.4809525444937455   FPR@TPR95: 96.82315672369887
+Model: ERFNET    Method: maxentropy     Dataset: RoadAnomaly    AUPRC score: 15.7193492138886   FPR@TPR95: 86.45525187600852
+Model: ERFNET    Method: void     Dataset: RoadAnomaly21    AUPRC score: 19.85298922564644   FPR@TPR95: 98.42627965315523
+Model: ERFNET    Method: void     Dataset: RoadObsticle21    AUPRC score: 0.5479997236717301   FPR@TPR95: 96.88244687449134
+Model: ERFNET    Method: void     Dataset: FS_LostFound_full    AUPRC score: 0.32530665786053925   FPR@TPR95: 96.88810901111053
+Model: ERFNET    Method: void     Dataset: fs_static    AUPRC score: 1.5784725744436785   FPR@TPR95: 96.99074084565328
+Model: ERFNET    Method: void     Dataset: RoadAnomaly    AUPRC score: 14.831915231445741   FPR@TPR95: 86.43480837664713

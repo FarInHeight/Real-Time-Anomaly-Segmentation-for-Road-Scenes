@@ -121,9 +121,7 @@ def main():
                 result = model(images)[0].squeeze(0)
 
         if args.method == 'void':
-            print(result.size())
             anomaly_result = F.softmax(result, dim=0)[-1]
-            print(anomaly_result.size())
         else:
             # discard 20th class output
             result = result[:-1]
