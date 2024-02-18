@@ -25,7 +25,7 @@ from torchvision.transforms import (
 from torchvision.transforms import ToTensor, ToPILImage
 
 from dataset import VOC12, cityscapes
-from transform import Relabel, ToLabel, Colorize
+from transform import Relabel, ToLabel, Colorize, RelabelENet
 from visualize import Dashboard
 from ohem_ce_loss import OhemCELoss
 
@@ -45,6 +45,97 @@ NUM_CLASSES = 20  # pascal=22, cityscapes=20
 
 color_transform = Colorize(NUM_CLASSES)
 image_transform = ToPILImage()
+
+weight_classes = {
+    'erfnet_enc': [
+        2.3653597831726,
+        4.4237880706787,
+        2.9691488742828,
+        5.3442072868347,
+        5.2983593940735,
+        5.2275490760803,
+        5.4394111633301,
+        5.3659925460815,
+        3.4170460700989,
+        5.2414722442627,
+        4.7376127243042,
+        5.2286224365234,
+        5.455126285553,
+        4.3019247055054,
+        5.4264230728149,
+        5.4331531524658,
+        5.433765411377,
+        5.4631009101868,
+        5.3947434425354,
+        1,
+    ],
+    "erfnet_dec": [
+        2.8149201869965,
+        6.9850029945374,
+        3.7890393733978,
+        9.9428062438965,
+        9.7702074050903,
+        9.5110931396484,
+        10.311357498169,
+        10.026463508606,
+        4.6323022842407,
+        9.5608062744141,
+        7.8698215484619,
+        9.5168733596802,
+        10.373730659485,
+        6.6616044044495,
+        10.260489463806,
+        10.287888526917,
+        10.289801597595,
+        10.405355453491,
+        10.138095855713,
+        1,
+    ],
+    'enet': [
+        7.8450451,
+        3.36366406,
+        14.04234086,
+        4.9948856,
+        39.25997007,
+        36.5152765,
+        32.90667927,
+        46.27742179,
+        40.67459427,
+        6.71150498,
+        33.5627786,
+        18.54488148,
+        32.99978951,
+        47.68372067,
+        12.70290829,
+        45.20793195,
+        45.7834263,
+        45.82760469,
+        48.40837536,
+        42.76317799,
+    ],
+    'bisenetv1': [
+        1.4297,
+        1.4805,
+        1.4363,
+        3.365,
+        2.6635,
+        1.4311,
+        2.1943,
+        1.4817,
+        1.4513,
+        2.1984,
+        1.5295,
+        1.6892,
+        3.2224,
+        1.4727,
+        7.5978,
+        9.4117,
+        15.2588,
+        5.6818,
+        2.2067,
+        1,
+    ],
+}
 
 
 # Augmentations - different function implemented to perform random augments on both image and target
@@ -134,6 +225,24 @@ class BiSeNetCoTransform(object):
         return input, target
 
 
+class ENetCoTransform(object):
+    def __init__(self, height=512):
+        self.height = height
+        pass
+
+    def __call__(self, input, target):
+        # do something to both images
+        input = Resize(self.height, Image.BILINEAR)(input)
+        target = Resize(self.height, Image.NEAREST)(target)
+
+        input = ToTensor()(input)
+
+        target = ToLabel()(target)
+        target = RelabelENet(255, 0)(target)
+
+        return input, target
+
+
 class CrossEntropyLoss2d(torch.nn.Module):
     def __init__(self, weight=None):
         super().__init__()
@@ -147,62 +256,36 @@ class CrossEntropyLoss2d(torch.nn.Module):
 def train(args, model, enc=False):
     best_acc = 0
 
-    # TODO: calculate weights by processing dataset histogram (now its being set by hand from the torch values)
-    # create a loder to run all images and calculate histogram of labels, then create weight array using class balancing
-
-    weight = torch.ones(NUM_CLASSES)
-    if enc:
-        weight[0] = 2.3653597831726
-        weight[1] = 4.4237880706787
-        weight[2] = 2.9691488742828
-        weight[3] = 5.3442072868347
-        weight[4] = 5.2983593940735
-        weight[5] = 5.2275490760803
-        weight[6] = 5.4394111633301
-        weight[7] = 5.3659925460815
-        weight[8] = 3.4170460700989
-        weight[9] = 5.2414722442627
-        weight[10] = 4.7376127243042
-        weight[11] = 5.2286224365234
-        weight[12] = 5.455126285553
-        weight[13] = 4.3019247055054
-        weight[14] = 5.4264230728149
-        weight[15] = 5.4331531524658
-        weight[16] = 5.433765411377
-        weight[17] = 5.4631009101868
-        weight[18] = 5.3947434425354
+    if args.model == 'erfnet' or args.model == 'erfnet_isomax_plus':
+        if enc:
+            weight = weight_classes['erfnet_enc']
+        else:
+            weight = weight_classes['erfnet_dec']
     else:
-        weight[0] = 2.8149201869965
-        weight[1] = 6.9850029945374
-        weight[2] = 3.7890393733978
-        weight[3] = 9.9428062438965
-        weight[4] = 9.7702074050903
-        weight[5] = 9.5110931396484
-        weight[6] = 10.311357498169
-        weight[7] = 10.026463508606
-        weight[8] = 4.6323022842407
-        weight[9] = 9.5608062744141
-        weight[10] = 7.8698215484619
-        weight[11] = 9.5168733596802
-        weight[12] = 10.373730659485
-        weight[13] = 6.6616044044495
-        weight[14] = 10.260489463806
-        weight[15] = 10.287888526917
-        weight[16] = 10.289801597595
-        weight[17] = 10.405355453491
-        weight[18] = 10.138095855713
+        weight = weight_classes[args.model]
 
-    weight[19] = 0
+    if args.no_unlabeled:
+        if args.model == 'enet':
+            weight[0] = 0
+        else:
+            weight[-1] = 0
+
+    weight = torch.FloatTensor(weight)
 
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
-    if args.erfnet:
+    if args.model == 'erfnet' or args.model == 'erfnet_isomax_plus':
         co_transform = MyCoTransform(enc, augment=True, height=args.height)  # 1024)
         co_transform_val = MyCoTransform(enc, augment=False, height=args.height)  # 1024)
-    else:
+        print('ERFNet data augmentation applied')
+    elif args.model == 'bisenetv1':
         co_transform = BiSeNetCoTransform(height=args.height, width=args.width, mode='train')  # 1024)
         co_transform_val = BiSeNetCoTransform(height=args.height, mode='val')  # 1024)
         print('BiSeNet data augmentation applied')
+    elif args.model == 'enet':
+        co_transform = ENetCoTransform(height=args.height)  # 1024)
+        co_transform_val = ENetCoTransform(height=args.height)  # 1024)
+
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     dataset_val = cityscapes(args.datadir, co_transform_val, 'val')
 
@@ -211,7 +294,8 @@ def train(args, model, enc=False):
 
     if args.cuda:
         weight = weight.cuda()
-    if args.erfnet:
+        print(weight)
+    if args.model == "erfnet" or args.model == "erfnet_isomax_plus":
         if args.loss == 'ce':
             criterion = CrossEntropyLoss2d(weight)
         if args.loss == 'focal':
@@ -220,11 +304,14 @@ def train(args, model, enc=False):
             # logit normalization
             criterion = LogitNormLoss(loss_func=criterion)
         print(type(criterion))
+    elif args.model == 'enet':
+        criterion = CrossEntropyLoss2d(weight)
+        print(type(criterion))
     else:
         score_thres = 0.7
-        criteria_p = OhemCELoss(thresh=score_thres)
-        criteria_16 = OhemCELoss(thresh=score_thres)
-        criteria_32 = OhemCELoss(thresh=score_thres)
+        criteria_p = OhemCELoss(thresh=score_thres, weight=weight)
+        criteria_16 = OhemCELoss(thresh=score_thres, weight=weight)
+        criteria_32 = OhemCELoss(thresh=score_thres, weight=weight)
 
     savedir = f'../save/{args.savedir}'
 
@@ -242,13 +329,14 @@ def train(args, model, enc=False):
     with open(modeltxtpath, "w") as myfile:
         myfile.write(str(model))
 
-    # TODO: reduce memory in first gpu: https://discuss.pytorch.org/t/multi-gpu-training-memory-usage-in-balance/4163/4        #https://github.com/pytorch/pytorch/issues/1893
-
-    # optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=2e-4)     ## scheduler 1
-    if args.erfnet:
-        optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999), eps=1e-08, weight_decay=1e-4)  ## scheduler 2
-    else:
-        optimizer = SGD(model.parameters(), lr=2.5e-2, momentum=0.9, weight_decay=1e-4)
+    if args.model == "erfnet" or args.model == "erfnet_isomax_plus":
+        optimizer = Adam(
+            model.parameters(), 5e-5 if args.fine_tuning else 5e-4, (0.9, 0.999), eps=1e-08, weight_decay=1e-4
+        )  ## scheduler 2
+    if args.model == "enet":
+        optimizer = Adam(model.parameters(), lr=5e-5 if args.fine_tuning else 5e-4, weight_decay=0.0002)
+    elif args.model == "bisenetv1":
+        optimizer = SGD(model.parameters(), lr=2.5e-3 if args.fine_tuning else 2.5e-2, momentum=0.9, weight_decay=1e-4)
         print('BiSeNet SDG applied')
 
     start_epoch = 1
@@ -269,9 +357,11 @@ def train(args, model, enc=False):
         best_acc = checkpoint['best_acc']
         print("=> Loaded checkpoint at epoch {})".format(checkpoint['epoch']))
 
-    # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
-    lambda1 = lambda epoch: pow((1 - ((epoch - 1) / args.num_epochs)), 0.9)  ## scheduler 2
-    scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)  ## scheduler 2
+    if args.model == "erfnet" or args.model == "erfnet_isomax_plus" or args.model == "bisenetv1":
+        lambda1 = lambda epoch: pow((1 - ((epoch - 1) / args.num_epochs)), 0.9)  ## scheduler erfnet
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)  ## scheduler 2
+    elif args.model == 'enet':
+        scheduler = lr_scheduler.StepLR(optimizer, 7 if args.fine_tuning else 100, 0.1)
 
     if args.visualize and args.steps_plot > 0:
         board = Dashboard(args.port)
@@ -309,10 +399,14 @@ def train(args, model, enc=False):
             inputs = Variable(images)
             targets = Variable(labels)
             optimizer.zero_grad()
-            if args.erfnet:
+            if args.model == 'erfnet' or args.model == 'erfnet_isomax_plus':
                 outputs = model(inputs, only_encode=enc)
+                outputs = outputs * (args.entropic_scale if args.model == 'erfnet_isomax_plus' else 1)
                 loss = criterion(outputs, targets[:, 0])
-            else:
+            elif args.model == 'enet':
+                outputs = model(inputs)
+                loss = criterion(outputs, targets[:, 0])
+            elif args.model == 'bisenetv1':
                 outputs, outputs16, outputs32 = model(inputs)
                 lossp = criteria_p(outputs, targets[:, 0])
                 loss2 = criteria_16(outputs16, targets[:, 0])
@@ -377,7 +471,10 @@ def train(args, model, enc=False):
             time_val = []
 
             if doIouVal:
-                iouEvalVal = iouEval(NUM_CLASSES)
+                if args.model == 'enet':
+                    iouEvalVal = iouEval(NUM_CLASSES, ignoreIndex=0)
+                else:
+                    iouEvalVal = iouEval(NUM_CLASSES)
 
             for step, (images, labels) in enumerate(loader_val):
                 start_time = time.time()
@@ -388,10 +485,14 @@ def train(args, model, enc=False):
                 inputs = Variable(images, volatile=True)  # volatile flag makes it free backward or outputs for eval
                 targets = Variable(labels, volatile=True)
 
-                if args.erfnet:
+                if args.model == 'erfnet' or args.model == 'erfnet_isomax_plus':
                     outputs = model(inputs, only_encode=enc)
+                    outputs = outputs * (args.entropic_scale if args.model == 'erfnet_isomax_plus' else 1)
                     loss = criterion(outputs, targets[:, 0])
-                else:
+                elif args.model == 'enet':
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets[:, 0])
+                elif args.model == 'bisenetv1':
                     outputs, outputs16, outputs32 = model(inputs)
                     lossp = criteria_p(outputs, targets[:, 0])
                     loss2 = criteria_16(outputs16, targets[:, 0])
@@ -403,7 +504,7 @@ def train(args, model, enc=False):
 
                 # Add batch to calculate TP, FP and FN for iou estimation
                 if doIouVal:
-                    # start_time_iou = time.time()
+
                     iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
                     # print ("Time to add confusion matrix: ", time.time() - start_time_iou)
 
@@ -526,31 +627,6 @@ def main(args):
     if args.cuda:
         model = torch.nn.DataParallel(model).cuda()
 
-    if args.state:
-        # if args.state is provided then load this state for training
-        # Note: this only loads initialized weights. If you want to resume a training use "--resume" option!!
-        """
-        try:
-            model.load_state_dict(torch.load(args.state))
-        except AssertionError:
-            model.load_state_dict(torch.load(args.state,
-                map_location=lambda storage, loc: storage))
-        #When model is saved as DataParallel it adds a model. to each key. To remove:
-        #state_dict = {k.partition('model.')[2]: v for k,v in state_dict}
-        #https://discuss.pytorch.org/t/prefix-parameter-names-in-saved-model-if-trained-by-multi-gpu/494
-        """
-
-        def load_my_state_dict(model, state_dict):  # custom function to load model when not all dict keys are there
-            own_state = model.state_dict()
-            for name, param in state_dict.items():
-                if name not in own_state:
-                    continue
-                own_state[name].copy_(param)
-            return model
-
-        # print(torch.load(args.state))
-        model = load_my_state_dict(model, torch.load(args.state))
-
     """
     def weights_init(m):
         classname = m.__class__.__name__
@@ -575,7 +651,33 @@ def main(args):
     f.write(str(model.state_dict()))
     f.close()
     """
-    if args.erfnet:
+    if args.fine_tuning:
+
+        def load_my_state_dict(model, state_dict):  # custom function to load model when not all dict elements
+            own_state = model.state_dict()
+            for name, param in state_dict.items():
+                if name not in own_state:
+                    if name.startswith('module.'):
+                        own_state[name.split('module.')[-1]].copy_(param)
+                    else:
+                        print(name, ' not loaded')
+                        continue
+                else:
+                    own_state[name].copy_(param)
+            return model
+
+        weightspath = args.loadDir + args.loadWeights
+        if args.model == 'erfnet' or args.model == 'erfnet_isomax_plus':
+            model = load_my_state_dict(model, torch.load(weightspath))
+        elif args.model == 'enet':
+            model = load_my_state_dict(model.module, torch.load(weightspath)['state_dict'])
+        elif args.model == 'bisenetv1':
+            model = load_my_state_dict(model, torch.load(weightspath))
+        print('Loaded model for fine-tuning!')
+
+    # training erfnet
+
+    if not args.fine_tuning and (args.model == 'erfnet' or args.model == 'erfnet_isomax_plus'):
         # train(args, model)
         if not args.decoder:
             print("========== ENCODER TRAINING ===========")
@@ -584,7 +686,7 @@ def main(args):
         # We must reinit decoder weights or reload network passing only encoder in order to train decoder
 
         print("========== DECODER TRAINING ===========")
-        if not args.state:
+        if not args.loadWeights:
             if args.pretrainedEncoder:
                 print("Loading encoder pretrained in imagenet")
                 from erfnet_imagenet import ERFNet as ERFNet_imagenet
@@ -599,6 +701,7 @@ def main(args):
             model = model_file.Net(NUM_CLASSES, encoder=pretrainedEnc)  # Add decoder to encoder
             if args.cuda:
                 model = torch.nn.DataParallel(model).cuda()
+
     # When loading encoder reinitialize weights for decoder because they are set to 0 when training dec
     model = train(args, model, False)  # Train decoder
     print("========== TRAINING FINISHED ===========")
@@ -610,7 +713,6 @@ if __name__ == '__main__':
         '--cuda', action='store_true', default=True
     )  # NOTE: cpu-only has not been tested so you might have to change code if you deactivate this flag
     parser.add_argument('--model', default="erfnet")
-    parser.add_argument('--state')
 
     parser.add_argument('--port', type=int, default=8097)
     parser.add_argument('--datadir', default=os.getenv("HOME") + "/cityscapes/")
@@ -632,13 +734,18 @@ if __name__ == '__main__':
     )  # recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)
     parser.add_argument('--resume', action='store_true')  # Use this flag to load last checkpoint for training
-    parser.add_argument('--erfnet', default=True, type=bool)
     parser.add_argument('--colab', action='store_true')
-
     parser.add_argument('--download-step', default=10, type=int)
 
     # EXTENSION
     parser.add_argument('--loss', default='ce', type=str)
-    parser.add_argument('--logit_norm', action='store_true')
+    parser.add_argument('--logit-norm', action='store_true')
+    parser.add_argument('--entropic-scale', type=float, default=10.0)
+    parser.add_argument('--no-unlabeled', action='store_true', default=False)
+
+    # fine-tuning
+    parser.add_argument('--loadDir', default='../trained_models/')
+    parser.add_argument('--loadWeights')
+    parser.add_argument('--fine-tuning', action='store_true', default=False)
 
     main(parser.parse_args())

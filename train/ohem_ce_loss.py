@@ -25,10 +25,10 @@ import torch.nn.functional as F
 
 
 class OhemCELoss(nn.Module):
-    def __init__(self, thresh):
+    def __init__(self, thresh, weight=None):
         super(OhemCELoss, self).__init__()
         self.thresh = -torch.log(torch.tensor(thresh, requires_grad=False, dtype=torch.float)).cuda()
-        self.criteria = nn.CrossEntropyLoss(reduction='none')
+        self.criteria = nn.CrossEntropyLoss(reduction='none', weight=weight)
 
     def forward(self, logits, labels):
         n_min = labels.numel() // 16
