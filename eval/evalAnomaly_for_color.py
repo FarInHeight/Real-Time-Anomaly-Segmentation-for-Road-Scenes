@@ -6,10 +6,6 @@ import torch
 import random
 from PIL import Image
 import numpy as np
-from erfnet import ERFNet
-from erfnet_isomax_plus import ERFNetIsomaxPlus
-from enet import ENet
-from bisenetv1 import BiSeNetV1
 import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr, plot_barcode
@@ -18,6 +14,11 @@ import torch.nn.functional as F
 from torchvision.transforms import Resize
 from torchvision.transforms import Compose, Resize
 from torchvision.transforms import ToTensor
+from matplotlib import pyplot as plt
+from erfnet import ERFNet
+from enet import ENet
+from bisenetv1 import BiSeNetV1
+from erfnet_isomax_plus import ERFNetIsomaxPlus
 
 seed = 42
 
@@ -52,14 +53,14 @@ def main():
     parser.add_argument(
         '--input',
         type=str,
-        default='/content/validation_dataset/RoadObsticle21/images/*.webp',
+        default='../validation_dataset/RoadObsticle21/images/*.webp',
         help='A single glob pattern such as "directory/*.jpg"',
     )
     parser.add_argument('--loadDir', default='../trained_models/')
     parser.add_argument('--loadWeights', default='erfnet_pretrained.pth')
     parser.add_argument('--loadModel', default='erfnet.py')
     parser.add_argument('--subset', default='val')  # can be val or train (must have labels)
-    parser.add_argument('--datadir', default='/content/cityscapes')
+    parser.add_argument('--datadir', default='../cityscapes')
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
@@ -81,10 +82,9 @@ def main():
 
     print('Loading model: ' + modelpath)
     print('Loading weights: ' + weightspath)
-    print(modelname)
     if modelname == "erfnet":
         net = ERFNet(NUM_CLASSES)
-    elif modelname == "erfnet_isomax_plus":
+    elif modelname == 'erfnet_isomax_plus':
         net = ERFNetIsomaxPlus(NUM_CLASSES)
     elif modelname == "enet":
         net = ENet(NUM_CLASSES)
@@ -185,6 +185,29 @@ def main():
         if 1 not in np.unique(ood_gts):
             continue
         else:
+            plt.imsave(
+                './save_color/' f'{modelname}/{args.method}' + path.split('validation_dataset')[1] + 'bitmap.png',
+                (ood_gts == 1) * 255,
+                cmap='bwr',
+            )
+
+            def select_treshold(proba, target):
+                precision, recall, thresholds = precision_recall_curve(target, proba)
+                best_treshold = sorted(
+                    list(zip(np.abs(precision - recall), thresholds)), key=lambda i: i[0], reverse=False
+                )[0][1]
+
+                return best_treshold
+
+            labels = np.where(ood_gts.flatten() != 1, -1, ood_gts.flatten() == 1)
+            results = anomaly_result.flatten()
+            best_treshold = select_treshold(results, labels)
+            plt.imsave(
+                './save_color/'
+                f'{modelname}/{args.method}' + path.split('validation_dataset')[1] + 'anomaly_seg_result.png',
+                (anomaly_result >= best_treshold) * 255,
+                cmap='bwr',
+            )
             ood_gts_list.append(ood_gts)
             anomaly_score_list.append(anomaly_result)
         del result, anomaly_result, ood_gts, mask, images

@@ -8,6 +8,10 @@ import torch
 import os
 import importlib
 
+from matplotlib import pyplot as plt
+
+import torch.nn.functional as F
+
 from PIL import Image
 from argparse import ArgumentParser
 
@@ -23,7 +27,8 @@ from bisenetv1 import BiSeNetV1
 from erfnet_isomax_plus import ERFNetIsomaxPlus
 from transform import Relabel, ToLabel, Colorize
 
-import visdom
+import glob
+import re
 
 
 NUM_CHANNELS = 3
@@ -75,25 +80,28 @@ cityscapes_trainIds2labelIds = Compose(
 
 def main(args):
 
-    modelname = args.loadModel.rstrip(".py")
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
+    modelname = args.loadModel.rstrip(".py")
 
-    print('Loading model: ' + modelpath)
-    print('Loading weights: ' + weightspath)
-    print(modelname)
+    print("Loading model: " + modelpath)
+    print("Loading weights: " + weightspath)
+
+    # Import ERFNet model from the folder
+    # Net = importlib.import_module(modelpath.replace("/", "."), "ERFNet")
     if modelname == "erfnet":
-        net = ERFNet(NUM_CLASSES)
-    elif modelname == "erfnet_isomax_plus":
-        net = ERFNetIsomaxPlus(NUM_CLASSES)
+        model = ERFNet(NUM_CLASSES)
+    elif modelname == 'erfnet_isomax_plus':
+        model = ERFNetIsomaxPlus(NUM_CLASSES)
     elif modelname == "enet":
-        net = ENet(NUM_CLASSES)
+        model = ENet(NUM_CLASSES)
     elif modelname == "bisenetv1":
-        net = BiSeNetV1(NUM_CLASSES)
-        net.aux_mode = 'eval'
+        model = BiSeNetV1(NUM_CLASSES)
+        model.aux_mode = 'eval'
 
+    model = torch.nn.DataParallel(model)
     if not args.cpu:
-        model = torch.nn.DataParallel(net).cuda()
+        model = model.cuda()
 
     def load_my_state_dict(model, state_dict):  # custom function to load model when not all dict elements
         own_state = model.state_dict()
@@ -122,74 +130,81 @@ def main(args):
             model = load_my_state_dict(model, torch.load(weightspath)['state_dict'])
         else:
             model = load_my_state_dict(model, torch.load(weightspath))
-    print("Model and weights LOADED successfully")
-
+    print('Model and weights LOADED successfully')
     model.eval()
 
-    if not os.path.exists(args.datadir):
-        print("Error: datadir could not be loaded")
+    for path in glob.glob(os.path.expanduser(args.input)):
+        print(path)
+        images = input_transform_cityscapes((Image.open(path).convert('RGB'))).unsqueeze(0).float().cuda()
 
-    loader = DataLoader(
-        cityscapes(args.datadir, input_transform_cityscapes, target_transform_cityscapes, subset=args.subset),
-        num_workers=args.num_workers,
-        batch_size=args.batch_size,
-        shuffle=False,
-    )
-
-    # For visualizer:
-    # must launch in other window "python3.6 -m visdom.server -port 8097"
-    # and access localhost:8097 to see it
-    if args.visualize:
-        vis = visdom.Visdom()
-
-    for step, (images, labels, filename, filenameGt) in enumerate(loader):
-        if not args.cpu:
-            images = images.cuda()
-            # labels = labels.cuda()
-
-        inputs = Variable(images)
-        # targets = Variable(labels)
         with torch.no_grad():
             if modelname == 'bisenetv1':
-                inputs = images - mean
-                inputs = images / std
+                images = images - mean
+                images = images / std
 
             if modelname == "erfnet" or modelname == "erfnet_isomax_plus":
-                outputs = model(inputs)
+                result = model(images).squeeze(0)
             elif modelname == "enet":
-                outputs = torch.roll(model(inputs), -1, 0)
+                result = torch.roll(model(images).squeeze(0), -1, 0)
             elif modelname == "bisenetv1":
-                outputs = model(inputs)[0]
+                result = model(images)[0].squeeze(0)
 
-        label = outputs[0].max(0)[1].byte().cpu().data
+        if args.method == 'void':
+            anomaly_result = F.softmax(result, dim=0)[-1]
+        else:
+            # discard 20th class output
+            anomaly_tmp = result[:-1]
+            if args.method == 'msp':
+                # MSP with temperature scaling
+                anomaly_result = 1.0 - torch.max(F.softmax(anomaly_tmp / args.temperature, dim=0), dim=0)[0]
+            elif args.method == 'maxlogit':
+                anomaly_result = -torch.max(anomaly_tmp, dim=0)[0]
+            elif args.method == 'maxentropy':
+                anomaly_result = torch.div(
+                    torch.sum(-F.softmax(anomaly_tmp, dim=0) * F.log_softmax(anomaly_tmp, dim=0), dim=0),
+                    torch.log(torch.tensor(anomaly_tmp.size(0))),
+                )
+
+        result = result.max(0)[1].byte().cpu().data
         # label_cityscapes = cityscapes_trainIds2labelIds(label.unsqueeze(0))
-        label_color = Colorize(NUM_CLASSES)(label.unsqueeze(0))
+        label_color = Colorize()(result.unsqueeze(0))
 
-        filenameSave = './save_color/' + f'{modelname}/' + filename[0].split("leftImg8bit/")[1]
+        filenameSave = (
+            "./save_color/"
+            + f'{modelname}/{args.method}/'
+            + re.split("leftImg8bit/|validation_dataset/", path)[2 if 'leftImg8bit' in path else 1]
+        )
         os.makedirs(os.path.dirname(filenameSave), exist_ok=True)
         # image_transform(label.byte()).save(filenameSave)
         label_save = ToPILImage()(label_color)
         label_save.save(filenameSave)
 
-        if args.visualize:
-            vis.image(label_color.numpy())
-        print(step, filenameSave)
+        plt.imsave(filenameSave.rstrip('.png') + '_colormap.png', anomaly_result.cpu().numpy(), cmap='bwr')
+
+        os.system(
+            f'python evalAnomaly_for_color.py --method {args.method} --input {path} --loadWeights {args.loadWeights} --loadModel {args.loadModel}'
+        )
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('--state')
-
-    parser.add_argument('--loadDir', default="../trained_models/")
-    parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
-    parser.add_argument('--loadModel', default="erfnet.py")
-    parser.add_argument('--subset', default="val")  # can be val, test, train, demoSequence
-
-    parser.add_argument('--datadir', default=os.getenv("HOME") + "/datasets/cityscapes/")
+    parser.add_argument(
+        '--input',
+        type=str,
+        default='../validation_dataset/RoadObsticle21/images/*.webp',
+        help='A single glob pattern such as "directory/*.jpg"',
+    )
+    parser.add_argument('--loadDir', default='../trained_models/')
+    parser.add_argument('--loadWeights', default='erfnet_pretrained.pth')
+    parser.add_argument('--loadModel', default='erfnet.py')
+    parser.add_argument('--subset', default='val')  # can be val or train (must have labels)
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--method', type=str, default='msp')
+    parser.add_argument('--temperature', type=float, default=1)
+    parser.add_argument('--height', type=int, default=1024)
+    parser.add_argument('--width', type=int, default=2048)
 
-    parser.add_argument('--visualize', action='store_true')
     main(parser.parse_args())

@@ -20,6 +20,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 
 from dataset import cityscapes
 from erfnet import ERFNet
+from erfnet_isomax_plus import ERFNetIsomaxPlus
 from enet import ENet
 from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
@@ -65,6 +66,8 @@ def main(args):
     global input_transform_cityscapes
     if modelname == "erfnet":
         net = ERFNet(NUM_CLASSES)
+    if modelname == "erfnet_isomax_plus":
+        net = ERFNetIsomaxPlus(NUM_CLASSES)
     elif modelname == "enet":
         net = ENet(NUM_CLASSES)
     elif modelname == "bisenetv1":
@@ -92,9 +95,15 @@ def main(args):
     if modelname == 'enet':
         model = load_my_state_dict(model.module, torch.load(weightspath)['state_dict'])
     elif modelname == 'bisenetv1':
-        model = load_my_state_dict(model, torch.load(weightspath))
+        if args.loadWeights.endswith('.tar'):
+            model = load_my_state_dict(model, torch.load(weightspath)['state_dict'])
+        else:
+            model = load_my_state_dict(model, torch.load(weightspath))
     else:
-        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+        if args.loadWeights.endswith('.tar'):
+            model = load_my_state_dict(model, torch.load(weightspath)['state_dict'])
+        else:
+            model = load_my_state_dict(model, torch.load(weightspath))
 
     # print(model.module.state_dict().eys())
 
