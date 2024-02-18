@@ -2,28 +2,26 @@
 This repository contains the code of the __Real-Time Anomaly Segmentation for Road Scenes__ project of the __Advanced Machine Learning__ course 23/24 - Politecnico di Torino
 
 ### Sample Results
+Example of Anomaly scores calculated by an ERFNet model using
+the MaxLogit inference method.
 
-#### First Example
-
-* Original Image <br/>
+#### Original Images 
+<p float="left">
 <img src="eval/saved_anomalies/tractor.png" alt="Tractor" style="height:128px;width:256px;"/>
-
-* Ground Truth Anomaly <br/>
-<img src="eval/saved_anomalies/tractor_label.png" alt="Tractor Ground Truth Anomaly" style="height:128px;width:256px;"/>
-
-* Anomaly Scores <br/>
-<img src="eval/saved_anomalies/tractor_anomaly_scores.png" alt="Tractor Anomaly Scores" style="height:128px;width:256px;"/>
-
-#### Second Example
-
-* Original Image <br/>
 <img src="eval/saved_anomalies/phone_box.png" alt="Phone Box" style="height:128px;width:256px;"/>
+</p>
 
-* Ground Truth Anomaly <br/>
+#### Ground Truth Anomaly 
+<p float="left">
+<img src="eval/saved_anomalies/tractor_label.png" alt="Tractor Ground Truth Anomaly" style="height:128px;width:256px;"/>
 <img src="eval/saved_anomalies/phone_box_label.png" alt="Phone Box Truth Anomaly" style="height:128px;width:256px;"/>
+</p>
 
-* Anomaly Scores <br/>
+#### Anomaly Scores 
+<p float="left">
+<img src="eval/saved_anomalies/tractor_anomaly_scores.png" alt="Tractor Anomaly Scores" style="height:128px;width:256px;"/>
 <img src="eval/saved_anomalies/phone_box_anomaly_scores.png" alt="Phone Box Anomaly Scores" style="height:128px;width:256px;"/>
+</p>
 
 ## Packages
 For instructions, please refer to the __README__ in each folder:
@@ -43,11 +41,6 @@ The repo provides the following pre-trained networks that can be used to perform
 * __Erfnet__ trained on 19 classes of the Cityscapes dataset using a __Cross-Entropy loss__, __Logit Norm + Cross Entropy__, __Logit Norm + Focal Loss__, __IsoMax+ + Cross Entropy__ and __IsoMax+ + Focal Loss__
 * __BiSeNetV1__ trained on 20 classes (19 + void class) of the Cityscapes dataset
 * __Enet__ trained on 20 classes (19 + void class) of the Cityscapes dataset
-
-
-## Anomaly Inference
-To run the anomaly inferences method is possible to use the following command
-* Anomaly Inference Command: ```python evalAnomaly.py --input='/content/validation_dataset/RoadAnomaly21/images/*.png'```. Change the dataset path ```'/content/validation_dataset/RoadAnomaly21/images/*.png'``` accordingly.
 
 ## Notebook
 The `AML_Project.ipynb` can be opened on Colab to run all the evaluation commands.
