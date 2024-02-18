@@ -6,24 +6,24 @@ This repository contains the code of the __Real-Time Anomaly Segmentation for Ro
 #### First Example
 
 * Original Image <br/>
-<img src="eval/saved_anomalies/tractor.png" alt="Tractor" style="height:256px;width:512px;width:512px;"/>
+<img src="eval/saved_anomalies/tractor.png" alt="Tractor" style="height:128px;width:256px;"/>
 
 * Ground Truth Anomaly <br/>
-<img src="eval/saved_anomalies/tractor_label.png" alt="Tractor Ground Truth Anomaly" style="height:256px;width:512px;"/>
+<img src="eval/saved_anomalies/tractor_label.png" alt="Tractor Ground Truth Anomaly" style="height:128px;width:256px;"/>
 
 * Anomaly Scores <br/>
-<img src="eval/saved_anomalies/tractor_anomaly_scores.png" alt="Tractor Anomaly Scores" style="height:256px;width:512px;"/>
+<img src="eval/saved_anomalies/tractor_anomaly_scores.png" alt="Tractor Anomaly Scores" style="height:128px;width:256px;"/>
 
 #### Second Example
 
 * Original Image <br/>
-<img src="eval/saved_anomalies/phone_box.png" alt="Phone Box" style="height:256px;width:512px;"/>
+<img src="eval/saved_anomalies/phone_box.png" alt="Phone Box" style="height:128px;width:256px;"/>
 
 * Ground Truth Anomaly <br/>
-<img src="eval/saved_anomalies/phone_box_label.png" alt="Phone Box Truth Anomaly" style="height:256px;width:512px;"/>
+<img src="eval/saved_anomalies/phone_box_label.png" alt="Phone Box Truth Anomaly" style="height:128px;width:256px;"/>
 
 * Anomaly Scores <br/>
-<img src="eval/saved_anomalies/phone_box_anomaly_scores.png" alt="Phone Box Anomaly Scores" style="height:256px;width:512px;"/>
+<img src="eval/saved_anomalies/phone_box_anomaly_scores.png" alt="Phone Box Anomaly Scores" style="height:128px;width:256px;"/>
 
 ## Packages
 For instructions, please refer to the __README__ in each folder:
@@ -31,7 +31,7 @@ For instructions, please refer to the __README__ in each folder:
 * [train](train) contains tools for training the networks for semantic segmentation.
 * [eval](eval) contains tools for evaluating/visualizing the networks' output and performing anomaly segmentation.
 * [imagenet](imagenet) contains scripts and model for pretraining ERFNet's encoder in Imagenet.
-* [trained_models](trained_models) contains the trained models used in the papers (some networks are in the Releases section of the Repo). 
+* [trained_models](trained_models) contains some trained models used in the papers (almost all the models are available in the [Releases section](https://github.com/FarInHeight/Real-Time-Anomaly-Segmentation-for-Road-Scenes/releases/tag/v3.0.0)). 
 
 ## Datasets
 
