@@ -14,12 +14,12 @@ For all options and defaults please see the bottom of the "main.py" file. Requir
 ## Example commands
 Train encoder with 150 epochs and batch=6 and then train decoder (decoder training starts after encoder training):
 ```
-python main.py --savedir erfnet_training1 --datadir /home/datasets/cityscapes/ --num-epochs 150 --batch-size 6 
+python main.py --savedir erfnet_training1 --datadir /content/cityscapes/ --num-epochs 150 --batch-size 6 
 ```
 
 Train decoder using encoder's pretrained weights with ImageNet:
 ```
-python main.py --savedir erfnet_training1 --datadir /home/datasets/cityscapes/ --num-epochs 150 --batch-size 6 --decoder --pretrainedEncoder "../trained_models/erfnet_encoder_pretrained.pth.tar"
+python main.py --savedir erfnet_training1 --datadir /content/cityscapes/ --num-epochs 150 --batch-size 6 --decoder --pretrainedEncoder "../trained_models/erfnet_encoder_pretrained.pth.tar"
 ```
 
 ## Output files generated for each training:

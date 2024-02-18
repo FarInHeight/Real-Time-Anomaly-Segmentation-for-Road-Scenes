@@ -1,0 +1,1 @@
+Best epoch is 50, with Val-IoU= 0.6363
