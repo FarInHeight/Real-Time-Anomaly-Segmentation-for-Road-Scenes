@@ -1,11 +1,37 @@
 ---------------------------------------
-Model ERFNET Took 94.67315459251404 seconds
+Model ENET Took 38.809675455093384 seconds
 =======================================
 Per-Class IoU:
-97.62 Road
+93.18 Road
+71.84 sidewalk
+84.76 building
+42.25 wall
+38.35 fence
+44.89 pole
+42.97 traffic light
+52.82 traffic sign
+87.33 vegetation
+52.27 terrain
+89.16 sky
+60.91 person
+44.91 rider
+87.31 car
+44.13 truck
+56.10 bus
+28.22 train
+26.28 motorcycle
+58.18 bicycle
+=======================================
+MEAN IoU:  58.20 %
+---------------------------------------
+
+Model ERFNET Took 37.40377497673035 seconds
+=======================================
+Per-Class IoU:
+97.63 Road
 81.37 sidewalk
 90.77 building
-49.43 wall
+49.42 wall
 54.93 fence
 60.81 pole
 62.60 traffic light
@@ -13,68 +39,45 @@ Per-Class IoU:
 91.35 vegetation
 60.97 terrain
 93.38 sky
-76.11 person
-53.45 rider
+76.12 person
+53.46 rider
 92.91 car
-72.78 truck
+72.79 truck
 78.87 bus
-63.86 train
+63.89 train
 46.41 motorcycle
-71.89 bicycle
+71.90 bicycle
 =======================================
 MEAN IoU:  72.20 %
 ---------------------------------------
-Model ENET Took 73.61838126182556 seconds
+
+Model ERFNET (FINE-TUNING-VOID) Took 37.49986147880554 seconds
 =======================================
 Per-Class IoU:
-95.91 Road
-72.92 sidewalk
-85.84 building
-44.04 wall
-37.41 fence
-45.47 pole
-43.29 traffic light
-54.01 traffic sign
-87.61 vegetation
-53.22 terrain
-89.87 sky
-60.45 person
-42.01 rider
-87.52 car
-44.97 truck
-56.01 bus
-29.63 train
-24.61 motorcycle
-58.67 bicycle
+96.85 Road
+81.48 sidewalk
+90.65 building
+49.78 wall
+53.79 fence
+61.03 pole
+62.29 traffic light
+73.00 traffic sign
+91.39 vegetation
+63.04 terrain
+92.75 sky
+76.33 person
+55.31 rider
+93.05 car
+74.42 truck
+78.08 bus
+65.34 train
+47.76 motorcycle
+71.22 bicycle
 =======================================
-MEAN IoU:  58.60 %
+MEAN IoU:  72.50 %
 ---------------------------------------
-Model ERFNET Took 92.50910425186157 seconds
-=======================================
-Per-Class IoU:
-97.62 Road
-81.37 sidewalk
-90.77 building
-49.43 wall
-54.93 fence
-60.81 pole
-62.60 traffic light
-72.32 traffic sign
-91.35 vegetation
-60.97 terrain
-93.38 sky
-76.11 person
-53.45 rider
-92.91 car
-72.78 truck
-78.87 bus
-63.86 train
-46.41 motorcycle
-71.89 bicycle
-=======================================
-MEAN IoU:  72.20 %
----------------------------------------
-Model BISENETV1 Took 66.06986331939697 seconds
+
+Model BISENETV1 Took 35.91532349586487 seconds
 =======================================
 Per-Class IoU:
 95.63 Road
@@ -83,7 +86,7 @@ Per-Class IoU:
 42.29 wall
 47.53 fence
 47.75 pole
-57.35 traffic light
+57.36 traffic light
 67.15 traffic sign
 89.90 vegetation
 59.93 terrain
@@ -91,10 +94,140 @@ Per-Class IoU:
 73.19 person
 50.84 rider
 92.21 car
-65.31 truck
+65.32 truck
 75.35 bus
 63.87 train
-50.87 motorcycle
+50.88 motorcycle
 67.67 bicycle
 =======================================
 MEAN IoU:  68.78 %
+---------------------------------------
+
+Model ERFNET (LN+CE) Took 36.37779521942139 seconds
+=======================================
+Per-Class IoU:
+97.24 Road
+78.93 sidewalk
+89.72 building
+52.02 wall
+49.56 fence
+55.96 pole
+55.17 traffic light
+66.06 traffic sign
+90.44 vegetation
+59.11 terrain
+93.13 sky
+70.86 person
+52.66 rider
+90.90 car
+52.11 truck
+69.81 bus
+59.98 train
+40.44 motorcycle
+64.55 bicycle
+=======================================
+MEAN IoU:  67.82 %
+---------------------------------------
+
+Model ERFNET (LN+FOCAL) Took 38.367900133132935 seconds
+=======================================
+Per-Class IoU:
+94.55 Road
+74.63 sidewalk
+88.86 building
+47.11 wall
+49.80 fence
+51.02 pole
+52.22 traffic light
+63.02 traffic sign
+89.89 vegetation
+57.52 terrain
+92.04 sky
+68.36 person
+39.32 rider
+89.97 car
+39.06 truck
+58.17 bus
+37.33 train
+27.47 motorcycle
+62.02 bicycle
+=======================================
+MEAN IoU:  62.23 %
+---------------------------------------
+
+Model ERFNET_ISOMAX_PLUS (CE) Took 40.98939514160156 seconds
+=======================================
+Per-Class IoU:
+96.80 Road
+76.90 sidewalk
+88.62 building
+45.93 wall
+50.00 fence
+52.89 pole
+53.27 traffic light
+62.59 traffic sign
+89.81 vegetation
+60.86 terrain
+92.06 sky
+69.14 person
+48.14 rider
+89.96 car
+48.78 truck
+58.79 bus
+23.51 train
+38.21 motorcycle
+62.82 bicycle
+=======================================
+MEAN IoU:  63.63 %
+---------------------------------------
+
+Model ERFNET_ISOMAX_PLUS (FOCAL) Took 39.28166460990906 seconds
+=======================================
+Per-Class IoU:
+95.20 Road
+74.35 sidewalk
+88.35 building
+47.00 wall
+47.26 fence
+50.60 pole
+49.05 traffic light
+57.97 traffic sign
+89.84 vegetation
+57.41 terrain
+91.71 sky
+67.36 person
+34.98 rider
+89.12 car
+42.77 truck
+55.80 bus
+40.10 train
+20.80 motorcycle
+62.21 bicycle
+=======================================
+MEAN IoU:  61.15 %
+
+---------------------------------------
+Model ERFNET (From Scrath CE) Took 49.47099328041077 seconds
+=======================================
+Per-Class IoU:
+97.11 Road
+78.73 sidewalk
+89.93 building
+53.29 wall
+49.34 fence
+56.53 pole
+55.54 traffic light
+65.10 traffic sign
+90.71 vegetation
+61.07 terrain
+92.82 sky
+71.36 person
+52.63 rider
+90.97 car
+60.82 truck
+66.54 bus
+47.22 train
+42.91 motorcycle
+65.21 bicycle
+=======================================
+MEAN IoU:  67.78 %
