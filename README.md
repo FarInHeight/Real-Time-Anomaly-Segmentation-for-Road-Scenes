@@ -49,7 +49,6 @@ The `AML_Project.ipynb` can be opened on Colab to run all the evaluation command
 
 - [Davide Sferrazza s326619](https://github.com/FarInHeight/)
 - [Davide Vitabile s330509](https://github.com/Vitabile/)
-- [Yonghu Liu s313442](https://github.com/Liu-Yonghu)
 
 ## License
 [MIT License](LICENSE)
