@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- encoding: utf-8 -*-
 
+# Author: Coin Cheung
+# Link: https://github.com/CoinCheung/BiSeNet
+
 
 import torch
 import torch.nn as nn
