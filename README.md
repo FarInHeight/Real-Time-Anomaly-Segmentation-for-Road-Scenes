@@ -1,6 +1,8 @@
 # Real-Time Anomaly Segmentation for Road Scenes
 This repository contains the code of the __Real-Time Anomaly Segmentation for Road Scenes__ project of the __Advanced Machine Learning__ course 23/24 - Politecnico di Torino
 
+A brief overview of the project is available at [s326619_s330509_project4.pdf](s326619_s330509_project4.pdf).
+
 ### Sample Results
 Example of Anomaly scores calculated by an ERFNet model using
 the MaxLogit inference method.
@@ -49,6 +51,3 @@ The `AML_Project.ipynb` can be opened on Colab to run all the evaluation command
 
 - [Davide Sferrazza s326619](https://github.com/FarInHeight/)
 - [Davide Vitabile s330509](https://github.com/Vitabile/)
-
-## License
-[MIT License](LICENSE)
