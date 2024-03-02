@@ -1,6 +1,7 @@
 # Real-Time Anomaly Segmentation for Road Scenes
 This repository contains the code of the __Real-Time Anomaly Segmentation for Road Scenes__ project of the __Advanced Machine Learning__ course 23/24 - Politecnico di Torino
 
+This repository was built on the following repository base:  [erfnet_pytorch](https://github.com/Eromera/erfnet_pytorch). \
 A brief overview of the project is available at [s326619_s330509_project4.pdf](s326619_s330509_project4.pdf).
 
 ### Sample Results
@@ -51,3 +52,7 @@ The `AML_Project.ipynb` can be opened on Colab to run all the evaluation command
 
 - [Davide Sferrazza s326619](https://github.com/FarInHeight/)
 - [Davide Vitabile s330509](https://github.com/Vitabile/)
+
+## License
+
+Please refer to the following [repo](https://github.com/Eromera/erfnet_pytorch) and [license](https://github.com/Eromera/erfnet_pytorch?tab=License-1-ov-file#readme) for the use and modification of the material contained in the linked repository and modified in this repo.
